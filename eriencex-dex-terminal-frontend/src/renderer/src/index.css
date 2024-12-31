@@ -1,0 +1,269 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-dark text-white text-sm font-jetbrains font-light;
+}
+
+.container {
+  @apply max-w-full px-4 mx-auto;
+}
+
+.menu-wrapper {
+  @apply fixed top-0 -left-full w-full xxl:relative xxl:top-auto xxl:left-auto xxl:w-auto z-[9999] transition-all duration-300;
+}
+
+.menu-wrapper.active {
+  @apply left-0 xxl:left-auto;
+}
+
+.menu-wrapper .menu-backdrop {
+  @apply fixed top-0 left-0 w-full h-full bg-backdrop xxl:relative xxl:top-auto xxl:left-auto xxl:w-auto xxl:h-auto z-10 transition-all duration-200 max-xxl:opacity-0 max-xxl:invisible;
+}
+
+.menu-wrapper.active .menu-backdrop {
+  @apply left-0 xxl:left-auto max-xxl:opacity-100 max-xxl:visible;
+}
+
+.menu-wrapper .menus {
+  @apply flex fixed -left-full top-0 flex-col items-start w-72 h-full py-10 bg-black xxl:relative xxl:left-auto xxl:top-auto xxl:flex-row xxl:items-center xxl:w-auto xxl:h-auto xxl:py-0 xxl:bg-transparent max-xxl:overflow-y-auto max-xxl:overflow-x-hidden z-20 transition-all duration-300;
+}
+
+.menu-wrapper.active .menus {
+  @apply left-0 xxl:left-auto;
+}
+
+.menu-wrapper .menus .menu-item {
+  @apply relative block w-full xxl:w-auto hover:bg-dark xxl:bg-transparent;
+}
+
+.menu-wrapper .menus .menu-item .menu-link {
+  @apply relative flex items-center justify-between gap-x-1 py-3 xxl:py-5 px-3 font-light;
+}
+
+.menu-wrapper .menus .menu-item .menu-link i {
+  @apply text-xxs transition-all duration-300;
+}
+
+.menu-wrapper .menus .menu-item:hover .menu-link i {
+  @apply rotate-180;
+}
+
+.menu-wrapper .menus .menu-item.has-submenu .submenu {
+  @apply relative left-auto top-auto w-full xxl:py-3 max-xxl:max-h-0 max-xxl:overflow-hidden max-xxl:opacity-0 max-xxl:invisible xxl:absolute xxl:left-0 xxl:top-full xxl:bg-dark xxl:shadow-full-light xxl:whitespace-nowrap xxl:min-w-48 xxl:opacity-0 xxl:invisible xxl:rounded-lg transition-all duration-300;
+}
+
+.menu-wrapper .menus .menu-item.has-submenu:hover .submenu {
+  @apply xxl:opacity-100 xxl:visible max-xxl:max-h-screen max-xxl:py-3 max-xxl:opacity-100 max-xxl:visible;
+}
+
+.menu-wrapper .menus .menu-item.has-submenu .submenu .submenu-item {
+  @apply relative block;
+}
+
+.menu-wrapper .menus .menu-item.has-submenu .submenu .submenu-link {
+  @apply relative block text-xs py-2 px-3 hover:bg-gray-800 hover:text-yellow-400 font-light;
+}
+
+/* PRIMARY COLOR */
+.primary-color {
+  color: #11e7b0;
+}
+
+.secondary-color {
+  color: #eb4034;
+}
+
+/* CHECKBOX START */
+.checkbox-wrapper-4 * {
+  box-sizing: border-box;
+  font-size: 12px;
+}
+.checkbox-wrapper-4 .cbx {
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+.checkbox-wrapper-4 .cbx:not(:last-child) {
+  margin-right: 6px;
+}
+.checkbox-wrapper-4 .cbx:hover {
+  background: rgba(0, 119, 255, 0.06);
+}
+.checkbox-wrapper-4 .cbx span {
+  float: left;
+  vertical-align: middle;
+  transform: translate3d(0, 0, 0);
+}
+.checkbox-wrapper-4 .cbx span:first-child {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  transform: scale(1);
+  border: 1px solid #9ca3af;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 1px rgba(0, 16, 75, 0.05);
+}
+.checkbox-wrapper-4 .cbx span:first-child svg {
+  position: absolute;
+  top: 3px;
+  left: 2px;
+  fill: none;
+  stroke: #000;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 16px;
+  stroke-dashoffset: 16px;
+  transition: all 0.3s ease;
+  transition-delay: 0.1s;
+  transform: translate3d(0, 0, 0);
+}
+.checkbox-wrapper-4 .cbx span:last-child {
+  padding-left: 8px;
+  line-height: 18px;
+}
+.checkbox-wrapper-4 .cbx:hover span:first-child {
+  border-color: #facc15;
+}
+.checkbox-wrapper-4 .inp-cbx {
+  position: absolute;
+  visibility: hidden;
+}
+.checkbox-wrapper-4 .inp-cbx:checked + .cbx span:first-child {
+  background: #facc15;
+  border-color: #facc15;
+  animation: wave-4 0.4s ease;
+}
+.checkbox-wrapper-4 .inp-cbx:checked + .cbx span:first-child svg {
+  stroke-dashoffset: 0;
+}
+.checkbox-wrapper-4 .inline-svg {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  user-select: none;
+}
+@media screen and (max-width: 640px) {
+  .checkbox-wrapper-4 .cbx {
+    width: 100%;
+    display: inline-block;
+  }
+}
+@-moz-keyframes wave-4 {
+  50% {
+    transform: scale(0.9);
+  }
+}
+@-webkit-keyframes wave-4 {
+  50% {
+    transform: scale(0.9);
+  }
+}
+@-o-keyframes wave-4 {
+  50% {
+    transform: scale(0.9);
+  }
+}
+@keyframes wave-4 {
+  50% {
+    transform: scale(0.9);
+  }
+}
+/* CHECKBOX END */
+
+/* TABS START */
+.tabs-wrapper {
+  @apply relative w-full;
+}
+
+.tabs-wrapper .tab-item {
+  @apply inline-block py-3.5 px-4 text-xs text-gray-400;
+}
+
+.tabs-wrapper .tab-item.active {
+  @apply bg-[#1E2026] border border-transparent border-t-2 border-t-[#11e7b0] text-white;
+}
+
+.tab-container {
+  @apply relative bg-[#1E2026] p-4;
+}
+
+/* TABS END */
+
+/* ICONS */
+.icon-xs {
+  width: 14px;
+  height: 14px;
+}
+.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+/* SCROLLBARS */
+
+/* VERTICAL THIN */
+.vertical-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.vertical-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vertical-thin::-webkit-scrollbar-thumb {
+  background-color: #1e2026;
+}
+
+/* HORIZONTAL THIN */
+
+.horizonal-thin::-webkit-scrollbar {
+  height: 4px;
+}
+
+.horizonal-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.horizonal-thin::-webkit-scrollbar-thumb {
+  background-color: #1e2026;
+}
+
+/* INPUT NUMBER BUTTON HIDE */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Memonic modal */
+
+.modal-box {
+  background-color: #1e2026;
+}
+
+/* toastify icon svg colors */
+.Toastify__toast--success .Toastify__toast-icon svg {
+  fill: #f0f0f0;
+}
+
+/* Customize the error toast icon color */
+.Toastify__toast--error .Toastify__toast-icon svg {
+  fill: #f0f0f0;
+}
+
+.grid-modal {
+  max-width: 700px !important;
+  width: 100%;
+}

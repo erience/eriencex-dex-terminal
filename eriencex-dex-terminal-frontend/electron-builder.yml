@@ -1,0 +1,43 @@
+appId: com.electron.app
+productName: ErienceX-DEX-Terminal
+directories:
+  output: release/1.0.3
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!release'
+asarUnpack:
+  - resources/**
+win:
+  executableName: ErienceX-DEX-Terminal
+  icon: public/icon.png
+nsis:
+  artifactName: ErienceX-DEX-Terminal-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+dmg:
+  artifactName: ErienceX-DEX-Terminal-${version}.${ext}
+linux:
+  target:
+    - AppImage
+    - snap
+    - deb
+  maintainer: electronjs.org
+  category: Utility
+appImage:
+  artifactName: ${name}-${version}.${ext}
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.utilities
+  icon: public/icon.icns
+  artifactName: ErienceX-DEX-Terminal-${version}-mac.${ext}
+npmRebuild: false
+publish:
+  provider: generic
+  url: https://github.com/erience/eriencex-dex-terminal.git
