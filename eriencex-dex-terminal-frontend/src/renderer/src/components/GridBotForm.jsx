@@ -163,7 +163,7 @@ const GridBotForm = ({ gridBot, handleGridChange, handleClick, buyingRange }) =>
               className="relative inline-block w-full h-full min-h-11 bg-[#11e7b0] hover:bg-[#14b38a]  text-white rounded-md"
               onClick={handleClick}
             >
-              Submit
+              Start Grid Bot
             </button>
           </div>
         </div>

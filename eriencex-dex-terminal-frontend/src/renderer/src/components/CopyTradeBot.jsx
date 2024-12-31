@@ -261,7 +261,7 @@ const CopyTradeBot = forwardRef(function CopyTradeBot(props, ref) {
             onClick={handleClick}
             disabled={isWebScoketConnected}
           >
-            Copy Bot
+            Start Copy Trade Bot
           </button>
         </div>
         <div className="col-span-12">
@@ -271,7 +271,7 @@ const CopyTradeBot = forwardRef(function CopyTradeBot(props, ref) {
             onClick={handleClose}
             disabled={!isWebScoketConnected}
           >
-            Close Bot
+            Stop Copy Trade Bot
           </button>
         </div>
       </div>

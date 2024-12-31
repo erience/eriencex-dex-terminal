@@ -116,7 +116,7 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
         const subAccInfo = message?.contents?.subaccount
         const freeCollateral = subAccInfo?.freeCollateral
         db.profileSettings[0].userEquity = Number(freeCollateral)
-        if (openOrders.length > 0) {
+        if (openOrders && openOrders.length > 0) {
           const openOrdersClientIds = openOrders.map((order) => {
             return order.clientId
           })

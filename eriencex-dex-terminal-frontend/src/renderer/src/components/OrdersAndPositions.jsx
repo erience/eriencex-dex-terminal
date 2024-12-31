@@ -20,7 +20,7 @@ const OrdersAndPositions = () => {
   const [positionData, setPositionData] = useState([])
   const [subAccNo, setSubAccNo] = useState(null)
   const [orderHistory, setOrderHistory] = useState([])
-  const [ordersCount, setOrdersCount] = useState([])
+  const [ordersCount, setOrdersCount] = useState(0)
   const dispatch = useDispatch()
   let x = true
   const orderRef = useRef([])
@@ -31,7 +31,7 @@ const OrdersAndPositions = () => {
   }
 
   const tabs = [
-    { id: 'openorder', label: 'Open Orders', count: ordersCount.length },
+    { id: 'openorder', label: 'Open Orders', count: ordersCount },
     {
       id: 'position',
       label: 'Positions',
@@ -112,21 +112,22 @@ const OrdersAndPositions = () => {
           // ---------------------------- GET ORDERS ----------------------------
           if (responseData?.contents?.orders) {
             const newOrders = responseData?.contents?.orders || []
+            console.log('newOrders:', newOrders)
 
             const openOrders = newOrders.filter(
               (order) => order.status === 'OPEN' || order.status === 'BEST_EFFORT_OPENED'
             )
 
-            let prevOrders = orderRef.current
+            // let prevOrders = orderRef.current
             const filledOrderIds = newOrders
               .filter(
                 (order) =>
-                  order.status !== 'OPEN' &&
-                  order.status !== 'UNTRIGGERED' &&
-                  order.status !== 'BEST_EFFORT_OPENED'
+                  order.status != 'OPEN' &&
+                  order.status != 'UNTRIGGERED' &&
+                  order.status != 'BEST_EFFORT_OPENED'
               )
               .map((order) => order.id)
-            prevOrders = prevOrders.map((order) => {
+            let prevOrders = orderRef.current.map((order) => {
               if (filledOrderIds.includes(order.id)) {
                 return {
                   ...order,
@@ -250,19 +251,25 @@ const OrdersAndPositions = () => {
     if (orderRef.current) {
       const orders = orderRef.current
       dispatch(setOpenOrderData(orders))
-      const latestOrders = orders.filter((order) => order.status != 'FILLED')
-      setOrdersCount(latestOrders)
     }
 
     const interval = setInterval(() => {
       const order = orderRef.current
       const now = Date.now()
-      orderRef.current = order?.filter((i) => !i?.timestamp || i.timestamp > now)
+      orderRef.current = order?.filter((order) => !order?.timestamp || order.timestamp > now)
     }, 500)
     return () => {
       clearInterval(interval)
     }
   }, [orderRef.current])
+
+  useEffect(() => {
+    if (openOrders.length > 0) {
+      console.log('open orders', openOrders)
+      const latestOpenOrders = openOrders.filter((order) => order.status != 'FILLED')
+      setOrdersCount(latestOpenOrders.length)
+    }
+  }, [openOrders])
 
   return (
     <>
