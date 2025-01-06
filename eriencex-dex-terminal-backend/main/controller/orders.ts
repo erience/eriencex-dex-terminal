@@ -453,7 +453,7 @@ export const executeOrder = async (req: any, res: any) => {
     const clientId = generateCustomOrderid(10, "order exe");
 
     const market = value.pair;
-    const type = OrderType.MARKET;
+    const type = OrderType.LIMIT;
 
     let side: any;
     if (value.side == "buy") {
@@ -465,53 +465,82 @@ export const executeOrder = async (req: any, res: any) => {
     let timeInForce = OrderTimeInForce.GTT;
 
     const execution = OrderExecution.DEFAULT;
-    const price = 0;
+    const currentPrice = await getAssetPrice(value.network, value.pair);
+    if (currentPrice.status == false) {
+      throw new Error(`Asset Price not found`);
+    }
+    let price = 0;
+    if (value.side == "buy") {
+      price = currentPrice.price + currentPrice.price * 0.01;
+    } else if (value.side == "sell") {
+      price = currentPrice.price - currentPrice.price * 0.01;
+    }
+    const time = calculateSecond(1, "week");
     const size = value.size;
     const postOnly = false;
     const reduceOnly = false;
     const triggerPrice = undefined;
-    //@ts-ignore
-    let goodTilBlock = 5;
-    if (currentHeight.height) {
-      goodTilBlock = Number(currentHeight.height) + 4 + 15;
-    }
-    try {
-      const tx = await client.placeOrder(
-        subaccount,
-        market,
-        type,
-        side,
-        price,
-        size,
-        clientId,
-        timeInForce,
-        20,
-        execution,
-        postOnly,
-        reduceOnly,
-        triggerPrice,
+
+    let responseSent = false;
+
+    const placeOrderWithRetry = async (retryCount = 0) => {
+      try {
+        const tx = await client.placeOrder(
+          subaccount,
+          market,
+          type,
+          side,
+          price,
+          size,
+          clientId,
+          timeInForce,
+          time,
+          execution,
+          postOnly,
+          reduceOnly,
+          triggerPrice,
+          // @ts-ignore
+          marketInfo,
+          undefined,
+          undefined,
+          "dYdX x Erience DEX Terminal"
+        );
         // @ts-ignore
-        marketInfo,
-        undefined,
-        goodTilBlock,
-        "dYdX x Erience DEX Terminal"
-      );
+        const hash = Uint8Array.from(tx?.hash);
+        const hashString = Array.from(hash, (byte) =>
+          ("0" + (byte & 0xff).toString(16)).slice(-2)
+        ).join("");
 
-      // @ts-ignore
-      const hash = Uint8Array.from(tx?.hash);
-      const hashString = Array.from(hash, (byte) => {
-        return ("0" + (byte & 0xff).toString(16)).slice(-2);
-      }).join("");
+        if (!responseSent) {
+          responseSent = true;
+          return res.status(200).json({
+            status: true,
+            message: `Limit Order Placed successfully`,
+            tx: hashString,
+            clientId,
+          });
+        }
+      } catch (err) {
+        if (err.message.includes("sequence mismatch") && retryCount < 3) {
+          console.log(
+            `Sequence mismatch detected.while executeLimitOrder Retrying... Attempt #${
+              retryCount + 1
+            }`
+          );
+          await delay(5000);
+          return placeOrderWithRetry(retryCount + 1);
+        } else {
+          console.log("Error during order execution", err);
+        }
 
-      return res.status(200).json({
-        status: true,
-        message: `Order Placed successfully`,
-        tx: hashString,
-      });
-    } catch (error) {
-      console.log("Error while executeOrder", error);
-      return res.status(400).json({ status: false, message: error.message });
-    }
+        if (!responseSent) {
+          responseSent = true;
+          return res.status(400).json({ status: false, message: err.message });
+        }
+      }
+    };
+
+    await placeOrderWithRetry();
   } catch (error) {
     console.log("Error while executeOrder", error);
     return res.status(400).json({ status: false, message: error.message });

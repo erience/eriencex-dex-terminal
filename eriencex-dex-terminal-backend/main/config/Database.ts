@@ -11,14 +11,21 @@ const connection = mysql2.createPool({
   connectionLimit: 10,
 });
 
-connection.getConnection((err, connection) => {
+function handleConnection(err: any, conn: any) {
   if (err) {
-    console.log(err);
-    throw err;
+    console.log("Error connecting to MySQL:", err);
+    if (err.code === "PROTOCOL_CONNECTION_LOST") {
+      console.log("Reconnecting to MySQL...");
+      connection.getConnection(handleConnection);
+    } else {
+      throw err;
+    }
   } else {
-    console.log(`Connected to MySQL Pool as id ${connection.threadId}`);
-    connection.release();
+    console.log(`Connected to MySQL Pool as id ${conn.threadId}`);
+    conn.release();
   }
-});
+}
 
-export default connection;
+connection.getConnection(handleConnection);
+
+module.exports = connection;
