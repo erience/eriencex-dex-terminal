@@ -72,6 +72,12 @@ const OrderBook = () => {
   const dispatch = useDispatch()
   const lastOrderBidsRef = useRef([])
   const lastOrderAsksRef = useRef([])
+  const [decimalValues, setDecimalValues] = useState([
+    { value: 0.0001, decimal: 4 },
+    { value: 0.001, decimal: 3 },
+    { value: 0.01, decimal: 2 },
+    { value: 0.1, decimal: 1 }
+  ])
 
   const {
     pair,
@@ -83,15 +89,32 @@ const OrderBook = () => {
     cryptoPair
   } = useSelector(selectData)
   const name = pair && pair?.split('-')
-  const decimalValues = [
-    { value: 0.0001, decimal: 4 },
-    { value: 0.001, decimal: 3 },
-    { value: 0.01, decimal: 2 },
-    { value: 0.1, decimal: 1 }
-  ]
+  // const decimalValues = [
+  //   { value: 0.0001, decimal: 4 },
+  //   { value: 0.001, decimal: 3 },
+  //   { value: 0.01, decimal: 2 },
+  //   { value: 0.1, decimal: 1 }
+  // ]
   const reconnectTimeoutRef = useRef(null)
+  useEffect(() => {
+    if (tickerDecimals && pair && tickerDecimals[pair] !== undefined) {
+      const baseDecimal = tickerDecimals[pair];
 
-  // check prev data of the orderbook price and update size (amount)
+      const updatedDecimalValues = Array.from({ length: 4 }, (_, i) => {
+        const decimal = baseDecimal - i;
+        const value = (Math.pow(10, -decimal)).toFixed(Math.abs(decimal)); // Force fixed-point format
+        return { value, decimal }; // `value` is now a string in fixed-point notation
+      }).filter(item => parseFloat(item.value) <= 1); // Convert back to number for comparison
+
+      if (updatedDecimalValues.length > 0) {
+        dispatch(setPairTickSize(updatedDecimalValues[0].decimal));
+      }
+
+      setDecimalValues(updatedDecimalValues);
+      // console.log({ updatedDecimalValues });
+    }
+  }, [tickerDecimals, pair]);
+
   const updateOrderList = (orders, newOrder) => {
     const existingIndex = orders.findIndex((o) => o.price == newOrder.price)
 
@@ -137,25 +160,27 @@ const OrderBook = () => {
         }
         if (responseData.channel === 'v4_orderbook') {
           const order = responseData.contents
-          // console.log('orderBooks', order)
+          // console.log('orderBooks', order, responseData)
 
           if (responseData?.message_id % 200 == 0) {
             counter.current = counter.current + 1
           }
+          if (responseData?.type === "subscribed") {
 
-          // if (Object.keys(order).includes('asks') && Object.keys(order).includes('bids')) {
-          //   const asks = order.asks
-          //     .map((ask) => ({ price: ask.price, size: ask.size }))
-          //     .filter((ask) => ask.size != 0)
-          //   const bids = order.bids
-          //     .map((bid) => ({ price: bid.price, size: bid.size }))
-          //     .filter((bid) => bid.size != 0)
+            if (Object.keys(order).includes('asks') && Object.keys(order).includes('bids')) {
+              const asks = order.asks
+                .map((ask) => ({ price: ask.price, size: ask.size }))
+                .filter((ask) => ask.size != 0)
+              const bids = order.bids
+                .map((bid) => ({ price: bid.price, size: bid.size }))
+                .filter((bid) => bid.size != 0)
 
-          //   setOrderAsks(asks.slice(0, 20))
-          //   setOrderBids(bids.slice(0, 20))
-          //   lastOrderAsksRef.current = asks.slice(0, 20)
-          //   lastOrderBidsRef.current = bids.slice(0, 20)
-          // }
+              setOrderAsks(asks.slice(0, 20))
+              setOrderBids(bids.slice(0, 20))
+              lastOrderAsksRef.current = asks.slice(0, 20)
+              lastOrderBidsRef.current = bids.slice(0, 20)
+            }
+          }
 
           // if (Object.keys(order).includes('bids')) {
           //   const bids = order['bids'][0]
@@ -170,6 +195,7 @@ const OrderBook = () => {
           // }
           if (Object.keys(order).includes('bids')) {
             const bids = order['bids'][0]
+            // console.log("Bids in orderbook", bids)
             if (bids[1] && bids[1] != 0) {
               const newBid = { price: bids[0], size: bids[1] }
               const updatedBids = updateOrderList(lastOrderBidsRef.current, newBid)
@@ -193,6 +219,7 @@ const OrderBook = () => {
           // }
           if (Object.keys(order).includes('asks')) {
             const asks = order['asks'][0]
+            // console.log("Asks in orderbook", asks)
             if (asks[1] && asks[1] != 0) {
               const newAsk = { price: asks[0], size: asks[1] }
               const updatedAsks = updateOrderList(lastOrderAsksRef.current, newAsk)
@@ -312,10 +339,29 @@ const OrderBook = () => {
       )
     })
 
+
+  const generateSubString = (value) => {
+    const strValue = value.toString();
+    if (strValue.startsWith("0.")) {
+      const fractionalPart = strValue.slice(2);
+      const leadingZeros = fractionalPart.match(/^0+/)?.[0]?.length || 0;
+
+      if (leadingZeros > 3) {
+        const remainingValue = fractionalPart.slice(leadingZeros);
+        return (
+          <>
+            0.0<sub className='px-[0.5px]'>{leadingZeros - 1}</sub>{remainingValue}
+          </>
+        );
+      }
+    }
+    return strValue;
+  };
+
   return (
     <>
-      <div className="relative col-span-12 xxl:col-span-4 border-r border-gray-700">
-        <div className="relative w-full py-5 px-3 h-full">
+      <div className="relative w-full">
+        <div className="relative w-full pt-0 pb-5 px-1 pl-2 h-full">
           <div className="relative py-3">
             <div className="relative flex items-center justify-between flex-wrap gap-2 mb-3">
               <div className="relative w-full flex items-center justify-between flex-wrap gap-x-1">
@@ -354,7 +400,7 @@ const OrderBook = () => {
                             className={`text-xs text-white hover:text-zinc-200 hover:bg-zinc-600 p-1.5 cursor-pointer rounded-md ${data.decimal == pairTickSize ? 'bg-zinc-600' : ''}`}
                             onClick={() => handleTickSize(data)}
                           >
-                            {data.value}
+                            {generateSubString(data.value)}
                           </li>
                         ))}
                       </ul>
@@ -374,10 +420,10 @@ const OrderBook = () => {
                 />
                 <div className="relative py-3">
                   <div className="relative flex items-center flex-wrap my-2">
-                    <div className="relative flex items-center flex-wrap gap-2 w-1/2">
+                    <div className="relative flex items-center flex-wrap gap-2 w-[200px]">
                       {renderTradeInfo()}
                     </div>
-                    <div className="flex items-center gap-2 w-1/2">
+                    <div className="flex items-center gap-2 w-[100px]">
                       <h3 className="text-xs">Spread</h3>
                       <h3 className="text-xs">{formatWithCommas(spread, 2)}%</h3>
                     </div>

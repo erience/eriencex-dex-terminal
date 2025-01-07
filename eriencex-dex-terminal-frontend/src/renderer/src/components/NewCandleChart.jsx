@@ -24,7 +24,7 @@ const NewCandleChart = () => {
     hide_top_toolbar: false,
     withdateranges: true,
     hide_side_toolbar: false,
-    allow_symbol_change: false,
+    allow_symbol_change: true,
     calendar: false,
     support_host: 'https://www.tradingview.com',
     backgroundColor: 'rgb(22,26,30)'

@@ -60,15 +60,28 @@ const GridRangesModal = ({ gridRanges, index, newObject }) => {
                     const takeProfit2 =
                       increasedValue * (Number(profitPercentage) / 100) + increasedValue
 
-                    const fees = newObject[i]
+                    const fees = newObject && newObject[i]
                       ? `$${Number(newObject[i].totalFees).toFixed(4)}`
-                      : '-'
-                    const profit = newObject[i] ? `$${Number(newObject[i].profit).toFixed(6)}` : '-'
-                    const totalBuyOrder = newObject[i] ? newObject[i].totalBuyOrder : '-'
-                    const totalSellOrder = newObject[i] ? newObject[i].totalSellOrder : '-'
-                    const feeTypeMaker = newObject[i] ? newObject[i].feeTypeMaker : '-'
-                    const feeTypeTaker = newObject[i] ? newObject[i].feeTypeTaker : '-'
-                    const sellOrderFilled = newObject[i] ? newObject[i].sellOrderFilled : '-'
+                      : '-';
+                    const profit = newObject && newObject[i]
+                      ? `$${Number(newObject[i].profit).toFixed(6)}`
+                      : '-';
+                    const totalBuyOrder = newObject && newObject[i]
+                      ? newObject[i].totalBuyOrder
+                      : '-';
+                    const totalSellOrder = newObject && newObject[i]
+                      ? newObject[i].totalSellOrder
+                      : '-';
+                    const feeTypeMaker = newObject && newObject[i]
+                      ? newObject[i].feeTypeMaker
+                      : '-';
+                    const feeTypeTaker = newObject && newObject[i]
+                      ? newObject[i].feeTypeTaker
+                      : '-';
+                    const sellOrderFilled = newObject && newObject[i]
+                      ? newObject[i].sellOrderFilled
+                      : '-';
+
 
                     return (
                       <tr key={i}>

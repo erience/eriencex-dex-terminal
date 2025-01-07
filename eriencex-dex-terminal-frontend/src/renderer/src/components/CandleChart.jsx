@@ -6,6 +6,7 @@ import moment from 'moment'
 import NewCandleChart from './NewCandleChart'
 import { useSelector } from 'react-redux'
 import { selectData } from '../redux-toolkit/dataSlice'
+import OrdersAndPositions from './OrdersAndPositions'
 
 export const Context = createContext()
 
@@ -130,25 +131,37 @@ const CandleChart = (props) => {
 
   return (
     <>
-      {candlesData?.length > 0 && !loading ? (
-        <div className="relative col-span-12 xxl:col-span-8">
-          <div className="relative w-full h-full">
-            {/* <Chart layout={chartLayoutOptions}>
+      <div className="relative col-span-12 xxl:col-span-9">
+        <div className="grid grid-cols-12">
+          <div className="col-span-12 lg:col-span-8">
+            {candlesData?.length > 0 && !loading ? (
+              <div className="relative w-full h-full">
+                {/* <Chart layout={chartLayoutOptions}>
               <Series ref={series1} type="candlestick" data={candlesData} color={candleColor} />
             </Chart> */}
-            <NewCandleChart />
-            <div className="relative w-full">
+                <NewCandleChart />
+                {/* <div className="relative w-full">
+                  <BuySell />
+                </div> */}
+              </div>
+            ) : (
+              <div className="d-flex justify-content-center">
+                <div className="spinner-border" role="status">
+                  <span className="sr-only"></span>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="col-span-12 lg:col-span-4">
+            <div className='relative w-full h-[500px] overflow-y-auto vertical-thin'>
               <BuySell />
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="d-flex justify-content-center">
-          <div className="spinner-border" role="status">
-            <span className="sr-only"></span>
+          <div className="col-span-12 lg:col-span-12">
+            <OrdersAndPositions />
           </div>
         </div>
-      )}
+      </div>
     </>
   )
 }

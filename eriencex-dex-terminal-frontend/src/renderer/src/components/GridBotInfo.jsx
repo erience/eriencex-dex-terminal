@@ -12,6 +12,7 @@ const GridBotInfo = ({ subAccNo }) => {
     useSelector(selectData)
   const [price, setPrice] = useState(0)
   const [editIndex, setEditIndex] = useState(0)
+  const [editGridId, setEditGridId] = useState(0)
   const [gridRanges, setGridRanges] = useState([])
   const [isBotClosed, setIsBotClosed] = useState(false)
   const [newObject, setNewObject] = useState({})
@@ -22,58 +23,76 @@ const GridBotInfo = ({ subAccNo }) => {
   const getJSONData = async () => {
     const db = await window.electron.getDBData()
     // console.log('db data', db)
+    // TODO:
     setBuyOrders(db.orders)
     setSellOrders(db.Limitorders)
     processOrders(db.orders, db.Limitorders)
   }
 
   const processOrders = (buyOrders, sellOrders) => {
-    const updatedObject = { ...newObject }
-
-    // Process buy orders
+    const gridIds = []
     buyOrders.forEach((order) => {
-      if (!updatedObject[order.gridindex]) {
-        updatedObject[order.gridindex] = {
-          totalBuyOrder: 0,
-          totalSellOrder: 0,
-          totalFees: 0,
-          feeTypeMaker: 0,
-          feeTypeTaker: 0,
-          sellOrderFilled: 0,
-          profit: 0
-        }
-      }
-      const gridData = updatedObject[order.gridindex]
-      gridData.totalBuyOrder += 1
-      gridData.totalFees += Number(order.fee) || 0
-      if (order.liquidityType === 'MAKER') {
-        gridData.feeTypeMaker += 1
-      } else if (order.liquidityType === 'TAKER') {
-        gridData.feeTypeTaker += 1
+      if (!gridIds.includes(order.gridSettingid)) {
+        gridIds.push(order.gridSettingid)
       }
     })
-
-    // Process sell orders
-    sellOrders.forEach((order) => {
-      const buyOrder = buyOrders.find((o) => o.systemId === order.limitOrderAgainOrderId)
-      if (buyOrder) {
-        const gridData = updatedObject[buyOrder.gridindex]
-        gridData.totalSellOrder += 1
-        gridData.totalFees += Number(order.fee) || 0
-        if (order.liquidityType === 'MAKER') {
-          gridData.feeTypeMaker += 1
-        } else if (order.liquidityType === 'TAKER') {
-          gridData.feeTypeTaker += 1
+    //console.log({gridIds})
+    const updatedObject = {}
+    for (const gridId of gridIds) {
+      const gridInfo = {}
+      // Process buy orders
+      buyOrders.forEach((order) => {
+        if (order.gridSettingid === gridId) {
+          if (!gridInfo[order.gridindex]) {
+            gridInfo[order.gridindex] = {
+              totalBuyOrder: 0,
+              totalSellOrder: 0,
+              totalFees: 0,
+              feeTypeMaker: 0,
+              feeTypeTaker: 0,
+              sellOrderFilled: 0,
+              profit: 0
+            }
+          }
+          const gridData = gridInfo[order.gridindex]
+          gridData.totalBuyOrder += 1
+          gridData.totalFees += Number(order.fee) || 0
+          if (order.liquidityType === 'MAKER') {
+            gridData.feeTypeMaker += 1
+          } else if (order.liquidityType === 'TAKER') {
+            gridData.feeTypeTaker += 1
+          }
         }
-        if (!order.isOrderOpen && order.limitOrderClosed) {
-          const profit = Number(order.triggerPrice) - Number(order.priceBoughtOn)
-          gridData.profit += profit
-          gridData.sellOrderFilled += 1
-        }
-      }
-    })
+      })
 
+      // Process sell orders
+      sellOrders.forEach((order) => {
+        if (order.gridSettingid === gridId) {
+          const buyOrder = buyOrders.find((o) => o.systemId === order.limitOrderAgainOrderId)
+          if (buyOrder) {
+            const gridData = gridInfo[buyOrder.gridindex]
+            gridData.totalSellOrder += 1
+            gridData.totalFees += Number(order.fee) || 0
+            if (order.liquidityType === 'MAKER') {
+              gridData.feeTypeMaker += 1
+            } else if (order.liquidityType === 'TAKER') {
+              gridData.feeTypeTaker += 1
+            }
+            if (!order.isOrderOpen && order.limitOrderClosed) {
+              // const profit = Number(order.triggerPrice) - Number(order.priceBoughtOn)
+              const profitPerUnit = Number(order.triggerPrice) - Number(order.priceBoughtOn)
+              const totalProfit = profitPerUnit * Number(order.size)
+              gridData.profit += totalProfit
+              gridData.sellOrderFilled += 1
+            }
+          }
+        }
+      })
+      updatedObject[gridId] = gridInfo
+    }
     setNewObject(updatedObject)
+
+    //console.log(updatedObject)
   }
 
   useEffect(() => {
@@ -116,7 +135,11 @@ const GridBotInfo = ({ subAccNo }) => {
 
   const startGrid = async (grid, index) => {
     if (price) {
-      await window.electron.startGridBot(index)
+      const data = await window.electron.startGridBot(index)
+      if (data.status === "false" || data.status === "error") {
+        showToast(data.message, 'error')
+        return
+      }
       const currentPrice = calculateCurrentPrice(grid.pair)
       const tradePrice = Number(grid.dollars) / Number(grid.totalGrid)
       const finalSize = tradePrice / currentPrice
@@ -141,15 +164,17 @@ const GridBotInfo = ({ subAccNo }) => {
   }
 
   const handleGridRanges = (gridData, index) => {
+    console.log({ gridData })
     const difference = Number(gridData.to) - Number(gridData.from)
     const gridRange = difference / Number(gridData.totalGrid)
     calculateGrid(Number(gridData.from), Number(gridData.to), gridRange)
     setEditIndex(index)
+    setEditGridId(gridData?.gridId)
     document.getElementById('grid_ranges').showModal()
   }
 
-  const clearDB = async () => {
-    await window.electron.clearJSON()
+  const clearDB = async (gridId) => {
+    await window.electron.clearJSON(gridId)
     showToast('CacheData cleared successfully', 'success')
   }
 
@@ -226,10 +251,10 @@ const GridBotInfo = ({ subAccNo }) => {
                           className="btn cursor-pointer"
                           onClick={() => startGrid(grid, index)}
                         >
-                          start
+                          Start
                         </button>
-                        <button className="btn" onClick={clearDB}>
-                          clear cache
+                        <button className="btn" onClick={() => clearDB(grid.gridId)}>
+                          Clear cache
                         </button>
                       </div>
                     )}
@@ -240,7 +265,7 @@ const GridBotInfo = ({ subAccNo }) => {
           </tbody>
         </table>
         <EditGridModal index={editIndex} />
-        <GridRangesModal gridRanges={gridRanges} index={editIndex} newObject={newObject} />
+        <GridRangesModal gridRanges={gridRanges} index={editIndex} newObject={newObject[editGridId]} />
       </div>
     </>
   )

@@ -11,6 +11,7 @@ import {
   setOpenOrderData,
   setUserEquity
 } from '../redux-toolkit/dataSlice'
+import CopybotLogs from './CopybotLogs'
 
 const OrdersAndPositions = () => {
   const [activeTab, setActiveTab] = useState('openorder')
@@ -31,6 +32,7 @@ const OrdersAndPositions = () => {
   }
 
   const tabs = [
+    // { id: 'openorder', label: 'Open Orders', count: openOrders.length },
     { id: 'openorder', label: 'Open Orders', count: ordersCount },
     {
       id: 'position',
@@ -38,7 +40,8 @@ const OrdersAndPositions = () => {
       count: positionData.length > 0 ? positionData.length : 0
     },
     { id: 'orderhistory', label: 'Order History' },
-    { id: 'gridbot', label: 'GridBot' }
+    { id: 'gridbot', label: 'GridBot' },
+    { id: 'copybot', label: 'Copybot' }
   ]
 
   const setUserEquityToJSON = async (equity) => {
@@ -84,8 +87,10 @@ const OrdersAndPositions = () => {
   const connectWebSocket = useCallback(() => {
     try {
       const webSocket = new WebSocket(webSocketURL)
+      console.log("websocket");
 
       if (reconnectTimeout.current) {
+        console.log("websocket reconnected");
         clearTimeout(reconnectTimeout.current)
         reconnectTimeout.current = null
       }
@@ -264,11 +269,14 @@ const OrdersAndPositions = () => {
   }, [orderRef.current])
 
   useEffect(() => {
-    if (openOrders.length > 0) {
-      console.log('open orders', openOrders)
-      const latestOpenOrders = openOrders.filter((order) => order.status != 'FILLED')
-      setOrdersCount(latestOpenOrders.length)
-    }
+    // console.log("openOrders.length",openOrders.length)
+
+    // if (openOrders.length > 0) {
+    // console.log('open orders', openOrders)
+    const latestOpenOrders = openOrders.filter((order) => order.status != 'FILLED')
+    // console.log("latestOpenOrders.length",latestOpenOrders.length,openOrders)
+    setOrdersCount(latestOpenOrders.length)
+    // }
   }, [openOrders])
 
   return (
@@ -281,9 +289,8 @@ const OrdersAndPositions = () => {
                 <button
                   key={tab.id}
                   type="button"
-                  className={`py-1.5 px-2 ${
-                    activeTab === tab.id ? 'primary-color' : 'text-gray-400'
-                  }`}
+                  className={`py-1.5 px-2 !text-xs font-semibold ${activeTab === tab.id ? 'primary-color' : 'text-gray-400'
+                    }`}
                   onClick={() => changeTab(tab.id)}
                 >
                   {tab.label}
@@ -299,6 +306,7 @@ const OrdersAndPositions = () => {
             <OrderHistory orderHistory={orderHistory} setOrderHistory={setOrderHistory} />
           )}
           {activeTab == 'gridbot' && <GridBotInfo subAccNo={subAccNo} />}
+          {activeTab == 'copybot' && <CopybotLogs />}
         </div>
       </div>
     </>

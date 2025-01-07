@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { formatWithCommas, showToast } from '../utils/helper'
 import { useDispatch, useSelector } from 'react-redux'
-import { selectData, setCryptoPair } from '../redux-toolkit/dataSlice'
+import { selectData, setCryptoPair, setPair } from '../redux-toolkit/dataSlice'
 
 const Positions = ({ positionData }) => {
   const {
@@ -11,7 +11,6 @@ const Positions = ({ positionData }) => {
     server,
     baseURL,
     enMemonic,
-    setPair,
     userEquity,
     pair,
     tickerDecimals
@@ -75,8 +74,8 @@ const Positions = ({ positionData }) => {
 
   const handleMarket = (ticker) => {
     if (ticker !== pair) {
-      setPair(ticker)
-      dispatch(setCryptoPair([]))
+      dispatch(setPair(ticker))
+      dispatch(setCryptoPair({ actionType: 'replace', data: [] }))
     }
   }
 
@@ -134,13 +133,14 @@ const Positions = ({ positionData }) => {
                 .map((position, i) => {
                   const size = position.size > 0
                   const oraclePrice = getPairPrice(position.market)
+                  const oraclePriceWithoutComma = oraclePrice && Number(oraclePrice.replace(/,/g, ''));
                   const maintenanceMargin = getMaintenanceMargin(position.market)
                   const liquidationPrice = getLiquidationPrice(
                     position,
-                    oraclePrice,
+                    oraclePriceWithoutComma,
                     maintenanceMargin
                   )
-                  let value = parseFloat(position.size) * oraclePrice
+                  let value = parseFloat(position.size) * Number(oraclePriceWithoutComma)
                   let realizedPnl = parseFloat(position.realizedPnl).toFixed(3)
                   let netFunding = parseFloat(position.netFunding).toFixed(3)
                   let entryPrice = parseFloat(position.entryPrice).toFixed(1)
@@ -148,8 +148,8 @@ const Positions = ({ positionData }) => {
                   const isLong = position.side === 'LONG'
 
                   let unrealizedPnl = isLong
-                    ? (oraclePrice - parseFloat(position.entryPrice)) * Math.abs(position.size)
-                    : (parseFloat(position.entryPrice) - oraclePrice) * Math.abs(position.size)
+                    ? (oraclePriceWithoutComma - parseFloat(position.entryPrice)) * Math.abs(position.size)
+                    : (parseFloat(position.entryPrice) - oraclePriceWithoutComma) * Math.abs(position.size)
 
                   unrealizedPnl = isNaN(unrealizedPnl) ? '0' : unrealizedPnl.toFixed(3)
 

@@ -9,7 +9,8 @@ const rootReducer = combineReducers({
 
 const persistConfig = {
   key: 'root',
-  storage
+  storage,
+  // blacklist: "data"
 }
 
 const persistedReducer = persistReducer(persistConfig, rootReducer)

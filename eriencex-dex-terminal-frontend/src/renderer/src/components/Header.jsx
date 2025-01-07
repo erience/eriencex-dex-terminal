@@ -15,6 +15,9 @@ import {
   setIsOnline
 } from '../redux-toolkit/dataSlice'
 import InternetWarningModal from './InternetWarningModal'
+import { IoMdWifi } from 'react-icons/io'
+import { MdPortableWifiOff } from 'react-icons/md'
+
 
 const Header = () => {
   const { server, memonic, baseURL, enMemonic, isOnline } = useSelector(selectData)
@@ -100,7 +103,9 @@ const Header = () => {
       <header className="sticky top-0 left-0 w-full bg-dark z-[999]">
         <div className="container">
           <div className="w-full flex items-center justify-between gap-x-3 py-5 xxl:py-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-10">
+              <div className='flex items-center gap-3'>
+
               <a href="#" className="relative block">
                 <img src={erienceLogo} alt="logo" className="w-[150px]" />
               </a>
@@ -108,7 +113,21 @@ const Header = () => {
               <a href="#" className="relative block">
                 <img src={logo} alt="logo" className="w-[100px]" />
               </a>
+              </div>
+            <div className={isOnline ? 'primary-color' : 'secondary-color'}>
+              {isOnline ? (
+                <div className='flex justify-center items-center gap-1'>
+                  <IoMdWifi  className="primary-color" size={20} /> Terminal Connected
+                </div>
+              ) : (
+                <div className='flex justify-center items-center gap-1'>
+                  <MdPortableWifiOff  className="secondary-color" size={20} /> Terminal Disconnected
+                </div>
+
+              )}
             </div>
+            </div>
+
 
             <div className="menu-wrapper" ref={menuWrapperRef}>
               <div className="menu-backdrop" onClick={menuToggle}></div>
@@ -135,7 +154,7 @@ const Header = () => {
           </div>
         </div>
       </header>
-      {isOnline == false && <InternetWarningModal />}
+      {/* {isOnline == false && <InternetWarningModal />} */}
     </>
   )
 }

@@ -37,10 +37,11 @@ export function calculateBuyingPower(freeCollateral, initialMarginFraction) {
 
 export const formatWithCommas = (number, tickSize) => {
   const parsedNumber = parseFloat(number)
+  const absTicksize = Math.abs(tickSize)
   if (tickSize) {
     return parsedNumber.toLocaleString('en-US', {
-      minimumFractionDigits: tickSize,
-      maximumFractionDigits: tickSize
+      minimumFractionDigits: absTicksize,
+      maximumFractionDigits: absTicksize
     })
   } else {
     return Math.floor(parsedNumber).toLocaleString('en-US')

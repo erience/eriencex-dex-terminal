@@ -159,14 +159,14 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
           }
           const sellPriceWithProfit =
             Number(price) + (Number(price) * Number(profitPercentage)) / 100
-          console.log({
-            sellPriceWithProfit,
-            price,
-            profitPercentage,
-            sellPriceWithProfitType: typeof sellPriceWithProfit,
-            priceType: typeof price,
-            profitPercentageType: typeof profitPercentage
-          })
+          // console.log({
+          //   sellPriceWithProfit,
+          //   price,
+          //   profitPercentage,
+          //   sellPriceWithProfitType: typeof sellPriceWithProfit,
+          //   priceType: typeof price,
+          //   profitPercentageType: typeof profitPercentage
+          // })
 
           const status = message.contents.orders[0].status
           const side = message.contents.orders[0].side
@@ -186,6 +186,24 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
             if (openOrders?.length > 0) {
               for (const order of oldOrders) {
                 if (order.systemId == clientId) {
+                  const pastOrders = db.Limitorders
+                  const limitOrdersOld = pastOrders.filter(
+                    (x) => x.isOrderOpen == true && x.limitOrderClosed == false
+                  )
+                  // default value to average price if not going inside if(limitOrdersOld.length > 2)
+                  let averagePrice = Number(price)
+                  // Adding Price of Current Order into calculation
+                  let totalPriceOfAllOpenOrders = Number(price)
+                  if (limitOrdersOld.length >= 2) {
+                    for (const order of limitOrdersOld) {
+                      // Adding Price of Old Orders into calculation
+                      totalPriceOfAllOpenOrders += Number(order.priceBoughtOn)
+                    }
+                    // console.log({ totalPriceOfAllOpenOrders })
+                    averagePrice = totalPriceOfAllOpenOrders / (limitOrdersOld.length + 1)
+                  }
+                  const avgSellPriceWithProfit =
+                    averagePrice + (averagePrice * Number(profitPercentage)) / 100
                   order.isMarketFilled = true
                   order.fee = fee
                   order.liquidityType = liquidityType
@@ -196,6 +214,7 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
                     systemId: `${limitOrderId}`,
                     limitOrderAgainOrderId: `${clientId}`,
                     pair: pair,
+                    size,
                     priceBoughtOn: price,
                     triggerPrice: sellPriceWithProfit,
                     isOrderOpen: true,
@@ -206,9 +225,7 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
 
                   // console.log('generateLimitOrderData -------', generateLimitOrderData)
 
-                  db.Limitorders.push(generateLimitOrderData)
-                  db.orders = oldOrders
-                  await saveCacheData(db)
+
 
                   setTimeout(async () => {
                     let passData = {
@@ -229,8 +246,54 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
                     }
 
                     // console.log('pass data in subAcc', passData)
+                    try {
+                      let generateAvgLimitOrderData = null
+                      if (limitOrdersOld.length >= 2) {
+                        const limitOrderId = generateCustomOrderid(5, 'Limit Order SubAccount')
+                        const orderIds = []
+                        limitOrdersOld.map((order) => {
+                          if (order.isMergeOrder === true && order.isMergeOrderOpen === true) {
+                            db.Limitorders.forEach((data) => {
+                              if (data.systemId === order.systemId) {
+                                data.isMergeOrderOpen = false
+                              }
+                            })
+                            orderIds.push(...order.orderIds)
+                          }
+                          if (!order.isMergeOrder || !order.isMergeOrderOpen) {
+                            orderIds.push(order.systemId);
+                          }
+                        })
+                        try {
+                          await axios.post(`${url}api/v1/cancelGridOrder`, { orderIds, memonic: enMemo, network: netWorkType })
+                        } catch (error) {
+                          console.log("Error while canceling Order", error)
+                        }
 
-                    await axios.post(`${url}api/v1/limitorder`, passData)
+                        generateAvgLimitOrderData = {
+                          isMergeOrder: true,
+                          isMergeOrderOpen: true,
+                          systemId: `${limitOrderId}`,
+                          orderIds,
+                          pair: pair,
+                          avgSellPriceWithProfit,
+                          averagePrice,
+                          isOrderOpen: true,
+                          gridSettingid: order.gridSettingid,
+                          finalOrderOpen: false,
+                          limitOrderClosed: false
+                        }
+                      }
+                      await axios.post(`${url}api/v1/limitorder`, passData)
+                      db.Limitorders.push(generateLimitOrderData)
+                      if (generateAvgLimitOrderData) {
+                        db.Limitorders.push(generateAvgLimitOrderData)
+                      }
+                      db.orders = oldOrders
+                      await saveCacheData(db)
+                    } catch (error) {
+                      console.log(error)
+                    }
                   }, 1000)
                 }
               }
@@ -242,10 +305,25 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
             const db = await getCacheData()
             const oldOrders = db.orders
             const oldLimitOrders = db.Limitorders
-
-            const openLimitOrders = oldLimitOrders.filter(
+            let feesPerOrder = fee
+            let openLimitOrders = oldLimitOrders.filter(
               (x) => x.systemId == clientId && x.isOrderOpen == true
             )
+            if (openLimitOrders[0].isMergeOrder && openLimitOrders[0].isMergeOrder === true) {
+              const mergeOrder = openLimitOrders[0]
+              feesPerOrder = feesPerOrder / mergeOrder.orderIds.length
+              const ordersInMergeOrder = oldLimitOrders.filter((order) => {
+                return mergeOrder.orderIds.includes(order.systemId)
+              })
+              oldLimitOrders.forEach((order) => {
+                if (order.systemId === clientId) {
+                  order.isMergeOrderOpen = false
+                  order.isOrderOpen = false
+                  order.limitOrderClosed = true
+                }
+              })
+              openLimitOrders = ordersInMergeOrder
+            }
 
             if (openLimitOrders.length > 0) {
               for (const order of oldOrders) {
@@ -265,7 +343,7 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
                 if (limitOrder.systemId == clientId) {
                   limitOrder.isOrderOpen = false
                   limitOrder.limitOrderClosed = true
-                  limitOrder.fee = fee
+                  limitOrder.fee = feesPerOrder
                   limitOrder.liquidityType = liquidityType
                 }
               }

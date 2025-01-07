@@ -19,7 +19,8 @@ const initialState = {
   API: 'https://indexer.dydx.trade/v4',
   baseURL: 'https://tradeapi.dydxboard.com/', // hosted URL - https://tradeapi.dydxboard.com/
   webSocketURL: 'wss://indexer.dydx.trade/v4/ws',
-  isOnline: navigator.onLine
+  isOnline: navigator.onLine,
+  copyBotLog: []
 }
 
 const dataSlice = createSlice({
@@ -94,7 +95,13 @@ const dataSlice = createSlice({
     },
     setIsOnline: (state, action) => {
       state.isOnline = action.payload
-    }
+    },
+    setCopyBotLog: (state, action) => {
+      state.copyBotLog = [...state.copyBotLog, action.payload];
+      if (state.copyBotLog.length > 1000) {
+        state.copyBotLog = state.copyBotLog.slice(-1000);
+      }
+    },
   }
 })
 
@@ -114,7 +121,8 @@ export const {
   setTickerDecimals,
   setUserEquity,
   setGridSettings,
-  setIsOnline
+  setIsOnline,
+  setCopyBotLog
 } = dataSlice.actions
 
 export default dataSlice.reducer

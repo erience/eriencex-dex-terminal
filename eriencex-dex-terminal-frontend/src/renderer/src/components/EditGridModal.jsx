@@ -41,7 +41,7 @@ const EditGridModal = ({ index }) => {
       await window.electron.updateDBData(index, gridBot)
       const res = await window.electron.getDBData()
       dispatch(setJsonData(res))
-      await window.electron.clearJSON()
+      await window.electron.clearJSON(gridSettings[index].gridId)
     }
     document.getElementById('edit_grid_info').close()
   }

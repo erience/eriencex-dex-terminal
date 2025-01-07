@@ -103,9 +103,9 @@ const BuySell = () => {
       if (usersAmount <= requiredAmount) {
         showToast(
           `Insufficient funds to start the grid for "${pair}".\n` +
-            `Required invest Amount: $${requireInvestAmount.toFixed()}\n` +
-            `Your Amount: $${gridBot.dollars}\n\n` +
-            `Please increase your investment or adjust the grid settings.`,
+          `Required invest Amount: $${requireInvestAmount.toFixed()}\n` +
+          `Your Amount: $${gridBot.dollars}\n\n` +
+          `Please increase your investment or adjust the grid settings.`,
           'error'
         )
         return false
@@ -1456,22 +1456,22 @@ const BuySell = () => {
 
   return (
     <>
-      <div className="tabs-wrapper">
-        {tabs.map((tab, index) => (
-          <button
-            key={index}
-            type="button"
-            className={`tab-item ${index === 0 ? 'active' : ''}`}
-            ref={(el) => (tabRefs.current[index] = el)}
-            onClick={() => handleTabItemClick(index)}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      <div className="tab-container !bg-transparent !p-0">
+        <div className="tabs-wrapper">
+          {tabs.map((tab, index) => (
+            <button
+              key={index}
+              type="button"
+              className={`tab-item ${index === 0 ? 'active' : ''}`}
+              ref={(el) => (tabRefs.current[index] = el)}
+              onClick={() => handleTabItemClick(index)}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
 
-      <div className="tab-container">
-        <div id="spot">
+        <div id="spot" className='p-1'>
           {/* ------------------------------------ Limit ------------------------------------ */}
           {tabIndex == 0 && (
             <Limit

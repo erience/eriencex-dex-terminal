@@ -89,7 +89,7 @@ const MarketTrades = () => {
 
   return (
     <>
-      <div className="relative py-3">
+      <div className="relative pt-3 pb-5 px-1 pl-2">
         <div className="relative flex items-center gap-x-3 mb-3">
           <button type="button" className="primary-color">
             Market Trades

@@ -25,12 +25,12 @@ const getUpdatedData = async () => {
 async function encryptRSA(message) {
   const publicKey = import.meta.env.VITE_PUBLIC_KEY
   const encrypted = crypto.publicEncrypt(
-      {
-          key: publicKey,
-          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-          oaepHash: "sha256"
-      },
-      Buffer.from(message)
+    {
+      key: publicKey,
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+      oaepHash: "sha256"
+    },
+    Buffer.from(message)
   );
   return encrypted.toString('base64');
 }
@@ -59,20 +59,22 @@ const executeOtherOrders = async (
   url,
 ) => {
   try {
-    console.log("-------------------In Execute Other Order-----------------------",{orderArray,
+    console.log("-------------------In Execute Other Order-----------------------", {
+      orderArray,
       pair,
       profitPercentageC,
       gridSettingid,
       marginToc,
       size,
       gridindex,
-      url})
-      // saveLog('execute order called')
-      if (orderArray.includes(undefined)) {
-        isTradeHappening=false
-        saveLog('execute order return cause of undefined',false)
-        return
-      }
+      url
+    })
+    // saveLog('execute order called')
+    if (orderArray.includes(undefined)) {
+      isTradeHappening = false
+      saveLog('execute order return cause of undefined', false)
+      return
+    }
     await getUpdatedData()
     const enMemo = await encryptRSA(memonic)
     for (let i = 0; i < orderArray.length; i++) {
@@ -97,6 +99,7 @@ const executeOtherOrders = async (
         let generateOrderData = {
           systemId: `${orderId}`,
           pair: pair,
+          size,
           priceBoughtOn: price,
           triggerPrice: profitCalculate,
           isOrderOpen: true,
@@ -108,31 +111,31 @@ const executeOtherOrders = async (
           gridindex: gridindex - (i + 3)
         }
 
-        console.log("GridIndex-1",gridindex - (i + 3))
+        console.log("GridIndex-1", gridindex - (i + 3))
         db.orders.push(generateOrderData)
 
         await saveCacheData(db)
 
         setTimeout(async () => {
           let passData = {
-              "pair": pair,
-              "size": size,
-              "side": "buy",
-              "triggerPrice": price,
-              "oType": "LIMIT",
-              "price": price,
-              "memonic": enMemo,
-              "ordertype": "GTT",
-              "time": 5,
-              "timeFrame": "minute",
-              "reduceOnly": false,
-              "postOnly": false,
-              "network": netWorkType,
-              orderid: `${generateOrderData.systemId}`
-            }
-            // console.log('pass data in In Execute Other Order', passData) 
-            const limitorder = await axios.post(`${url}api/v1/limitorder`, passData);
-            saveLog(`Buy Order Placed In Execute Other Order systemId: ${orderId}`)
+            "pair": pair,
+            "size": size,
+            "side": "buy",
+            "triggerPrice": price,
+            "oType": "LIMIT",
+            "price": price,
+            "memonic": enMemo,
+            "ordertype": "GTT",
+            "time": 5,
+            "timeFrame": "minute",
+            "reduceOnly": false,
+            "postOnly": false,
+            "network": netWorkType,
+            orderid: `${generateOrderData.systemId}`
+          }
+          // console.log('pass data in In Execute Other Order', passData) 
+          const limitorder = await axios.post(`${url}api/v1/limitorder`, passData);
+          saveLog(`Buy Order Placed In Execute Other Order systemId: ${orderId}`)
         }, i * 5000)
       } else {
       }
@@ -145,7 +148,7 @@ const executeOtherOrders = async (
 }
 
 function calculatePriceHike(currentPrice) {
-  let percentage=1;
+  let percentage = 1;
   const hikeAmount = currentPrice * (percentage / 100);
   const newPrice = currentPrice + hikeAmount;
   return newPrice;
@@ -168,7 +171,7 @@ const getPrice = async (prices, size, url) => {
 
       if (gridSettings.length > 0) {
         const findActiveGrid = gridSettings.filter((x) => x.isGridActive == true)
-        
+
         if (findActiveGrid && findActiveGrid.length > 0) {
           // console.log('findActiveGrid ------ in ', findActiveGrid)
           for (const range of findActiveGrid) {
@@ -201,12 +204,12 @@ const getPrice = async (prices, size, url) => {
                 // console.log('profitCalculate in getprice -----',profitCalculate)
 
                 for (let i = 0; i < gridRanges.length; i++) {
-                  const marginFrom = Number(gridRanges[i]) - ((Number(gridRanges[i]) * Number(margintoConsider))/100)
-                  const marginTo = Number(gridRanges[i]) + ((Number(gridRanges[i]) * Number(margintoConsider))/100)
+                  const marginFrom = Number(gridRanges[i]) - ((Number(gridRanges[i]) * Number(margintoConsider)) / 100)
+                  const marginTo = Number(gridRanges[i]) + ((Number(gridRanges[i]) * Number(margintoConsider)) / 100)
                   // console.log("margin in for loop----",{marginFrom,marginTo})
                   // console.log("gridRanges[i] in for loop----",gridRanges[i])
                   // console.log({condition2: Number(price) >= marginFrom, condition3:Number(price) <= marginTo})
-                  if (Number(price) >= marginFrom && Number(price) <= marginTo ) {
+                  if (Number(price) >= marginFrom && Number(price) <= marginTo) {
                     console.log('Price matched')
                     saveLog(`Price matched ${marginFrom} - ${price} -${marginTo}`)
                     const pastOrders = db.orders
@@ -216,7 +219,7 @@ const getPrice = async (prices, size, url) => {
                         x.isOrderOpen == true &&
                         x.gridindex == i
                     )
-                    let marketOrderToPlace=false
+                    let marketOrderToPlace = false
                     const filterActiveOrdersToPlaceMarketOrder = pastOrders.filter(
                       (x) =>
                         x.gridSettingid == gridSettingid &&
@@ -224,8 +227,8 @@ const getPrice = async (prices, size, url) => {
                     )
                     // console.log("filterActiveOrdersToPlaceMarketOrder",{filterActiveOrdersToPlaceMarketOrder})
                     // console.log('filterActive-----',filterActiveOrders)
-                    if (filterActiveOrdersToPlaceMarketOrder.length==0){
-                      marketOrderToPlace=true;
+                    if (filterActiveOrdersToPlaceMarketOrder.length == 0) {
+                      marketOrderToPlace = true;
                     }
 
                     let isOrderOpen = false
@@ -238,7 +241,7 @@ const getPrice = async (prices, size, url) => {
                         let currentIndex1 = i - 1
                         let currentIndex = Math.abs(currentIndex1)
 
-                       
+
 
                         if (currentIndex <= 0) {
                         } else if (currentIndex >= 1) {
@@ -260,31 +263,41 @@ const getPrice = async (prices, size, url) => {
 
                         // console.log('gridToBeAdded',gridToBeAdded)
                         const pastOrders = db.Limitorders
+                        let mergeOrderOpen = 0;
+                        const mergeOrderIds = pastOrders
+                          .filter(order => {
+                            if (order.isMergeOrderOpen === true) {
+                              mergeOrderOpen++;
+                              return true;
+                            }
+                            return false;
+                          })
+                          .flatMap(order => order.orderIds);
                         const limitOrdersOld = pastOrders.filter(
-                          (x) => x.isOrderOpen == true && x.limitOrderClosed == false
+                          (x) => x.isOrderOpen == true && x.limitOrderClosed == false && !mergeOrderIds.includes(x.systemId)
                         )
                         const marketLimitOrders = db.orders
 
-                       // console.log('marketLimitOrders---', marketLimitOrders)
+                        // console.log('marketLimitOrders---', marketLimitOrders)
 
                         const findMarketLimitOrders = marketLimitOrders.filter(
                           (x) => x.isMarketFilled == false && x.isthisbuylimitOrder == true
                         )
 
                         const mergeOrders = [...limitOrdersOld, ...findMarketLimitOrders]
-                        const getSystemId = mergeOrders.map((x)=> x.systemId)
+                        const getSystemId = mergeOrders.map((x) => x.systemId)
                         // console.log('all systemId: ', getSystemId)
                         // saveLog(`ALL SYSTEM ID'S --- ${getSystemId}`)
 
                         //console.log('findMarketLimitOrders---', findMarketLimitOrders)
 
                         const totalLimitOrders =
-                          findMarketLimitOrders.length + limitOrdersOld.length
+                          findMarketLimitOrders.length + limitOrdersOld.length + mergeOrderOpen
 
-                          // console.log('totalLimitOrders---', totalLimitOrders)
-                          // console.log('userEquity',equity)
-                          // console.log('getOrderLimit(Number(equity)---', getOrderLimit(Number(equity)))
-                          saveLog(`totalLimitOrders ${totalLimitOrders}`)
+                        // console.log('totalLimitOrders---', totalLimitOrders)
+                        // console.log('userEquity',equity)
+                        // console.log('getOrderLimit(Number(equity)---', getOrderLimit(Number(equity)))
+                        saveLog(`totalLimitOrders ${totalLimitOrders}`)
 
 
                         if (totalLimitOrders > getOrderLimit(Number(equity))) {
@@ -300,10 +313,11 @@ const getPrice = async (prices, size, url) => {
                         )
 
                         //console.log('orderId in trades---',orderId)
-                        
+
                         let generateOrderData = {
                           systemId: `${orderId}`,
                           pair: pair,
+                          size,
                           priceBoughtOn: price,
                           triggerPrice: parseFloat(profitCalculate),
                           // priceBoughtOn: calculatePriceHike(price),
@@ -318,50 +332,52 @@ const getPrice = async (prices, size, url) => {
                         }
 
                         db.orders.push(generateOrderData)
-console.log({priceBoughtOn: calculatePriceHike(price),
-  triggerPrice: parseFloat(calculatePriceHike(price) + (calculatePriceHike(price) * profitPercentageC) / 100)})
+                        console.log({
+                          priceBoughtOn: calculatePriceHike(price),
+                          triggerPrice: parseFloat(calculatePriceHike(price) + (calculatePriceHike(price) * profitPercentageC) / 100)
+                        })
                         // console.log('above passData in getPrice--')
-                        let passData = 
-                          {
-                            "pair": pair,
-                            "size": parsedSize,
-                            "side": "buy",
-                            "triggerPrice": price,
-                            "oType": "LIMIT",
-                            "price": price,
-                            "memonic": enMemo,
-                            "ordertype": "GTT",
-                            "time": 5,
-                            "timeFrame": "minute",
-                            "reduceOnly": false,
-                            "postOnly": false,
-                            "network": netWorkType,
-                            "orderid": `${orderId}`
-                          }
+                        let passData =
+                        {
+                          "pair": pair,
+                          "size": parsedSize,
+                          "side": "buy",
+                          "triggerPrice": price,
+                          "oType": "LIMIT",
+                          "price": price,
+                          "memonic": enMemo,
+                          "ordertype": "GTT",
+                          "time": 5,
+                          "timeFrame": "minute",
+                          "reduceOnly": false,
+                          "postOnly": false,
+                          "network": netWorkType,
+                          "orderid": `${orderId}`
+                        }
 
-                          // console.log('pass data in getPrice',passData)
-                          if (marketOrderToPlace) {
-                            // delete passData.triggerPrice
-                            // delete passData.oType
-                            // delete passData.price
-                            // delete passData.ordertype
-                            // delete passData.time
-                            // delete passData.orderid
-                            // delete passData.postOnly
-                            // delete passData.timeFrame
-                            // console.log("marketOrderPlaced",passData)
-                            passData.price= calculatePriceHike(price)
-                            passData.triggerPrice= calculatePriceHike(price)
-                            console.log({price,newPrice:calculatePriceHike(price)})
-                            await axios.post(`${url}api/v1/limitorder`, passData);
-                            // await axios.post(`${url}api/v1/limitorder`, passData);
-                            saveLog(`getPrice buy order placed in if systemId: ${orderId}`)
-                            marketOrderToPlace=false;
-                          }else{
-                            // await axios.post(`${url}api/v1/limitorder`, {...passData,price:calculatePriceHike(price)});
-                            saveLog(`getPrice buy order placed in else systemId: ${orderId}`)
-                            await axios.post(`${url}api/v1/limitorder`, passData);
-                          }
+                        // console.log('pass data in getPrice',passData)
+                        if (marketOrderToPlace) {
+                          // delete passData.triggerPrice
+                          // delete passData.oType
+                          // delete passData.price
+                          // delete passData.ordertype
+                          // delete passData.time
+                          // delete passData.orderid
+                          // delete passData.postOnly
+                          // delete passData.timeFrame
+                          // console.log("marketOrderPlaced",passData)
+                          passData.price = calculatePriceHike(price)
+                          passData.triggerPrice = calculatePriceHike(price)
+                          console.log({ price, newPrice: calculatePriceHike(price) })
+                          await axios.post(`${url}api/v1/limitorder`, passData);
+                          // await axios.post(`${url}api/v1/limitorder`, passData);
+                          saveLog(`getPrice buy order placed in if systemId: ${orderId}`)
+                          marketOrderToPlace = false;
+                        } else {
+                          // await axios.post(`${url}api/v1/limitorder`, {...passData,price:calculatePriceHike(price)});
+                          saveLog(`getPrice buy order placed in else systemId: ${orderId}`)
+                          await axios.post(`${url}api/v1/limitorder`, passData);
+                        }
 
                         await saveCacheData(db)
                         await executeOtherOrders(
@@ -376,13 +392,13 @@ console.log({priceBoughtOn: calculatePriceHike(price),
                         )
 
                         isTradeHappening = false
-                      }else{
-                        saveLog(`Price matched But Trade Happening ${marginFrom} - ${price} -${marginTo}`,false)
+                      } else {
+                        saveLog(`Price matched But Trade Happening ${marginFrom} - ${price} -${marginTo}`, false)
                       }
                     } else {
-                      saveLog(`Price matched But Already Active Order ${marginFrom} - ${price} -${marginTo}`,false)
+                      saveLog(`Price matched But Already Active Order ${marginFrom} - ${price} -${marginTo}`, false)
                     }
-                  }else{
+                  } else {
                     // saveLog(`Price Not matched ${marginFrom} - ${price} -${marginTo}`)
                     // console.log(`Price Not matched ${marginFrom} - ${price} -${marginTo}`)
                   }

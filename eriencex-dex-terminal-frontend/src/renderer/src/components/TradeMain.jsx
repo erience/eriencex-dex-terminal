@@ -62,11 +62,11 @@ const TradeMain = () => {
     <>
       <div className="grid grid-cols-12">
         <CryptoMain />
-        <Markets />
-        <OrdersAndPositions />
+        {/* <Markets /> */}
+        {/* <OrdersAndPositions /> */}
       </div>
       <div className="relative">
-        <div className="fixed z-50 bottom-3 right-3 rounded-sm border border-white cursor-pointer group">
+        <div className="fixed z-50 bottom-14 right-3 rounded-sm border border-white cursor-pointer group">
           <div className="bg-dark p-2">
             <p className="text-md">{blockHeight}</p>
           </div>

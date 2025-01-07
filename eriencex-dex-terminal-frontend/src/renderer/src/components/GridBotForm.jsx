@@ -23,13 +23,15 @@ const GridBotForm = ({ gridBot, handleGridChange, handleClick, buyingRange }) =>
 
   return (
     <>
-      <div className="relative grid grid-cols-12 gap-5">
-        <div
-          onClick={() => document.getElementById('about_gridbot').showModal()}
-          className="col-span-12 flex gap-1 items-center justify-end cursor-pointer"
-        >
-          <h5 className="text-xs">Instructions</h5>
-          <button>
+      <div className="relative grid grid-cols-12 gap-5 text-xs">
+        <div className="col-span-12 flex gap-1 items-center text-[#11e7b0] justify-end">
+          <h5 className="text-xs cursor-pointer" onClick={() => document.getElementById('about_gridbot').showModal()}>
+            Instructions
+          </h5>
+          <button
+            onClick={() => document.getElementById('about_gridbot').showModal()}
+            className="cursor-pointer"
+          >
             <FaInfoCircle />
           </button>
         </div>
@@ -44,7 +46,7 @@ const GridBotForm = ({ gridBot, handleGridChange, handleClick, buyingRange }) =>
           </div>
         </div>
         <div className="relative grid gap-4 col-span-12">
-          <div className="relative col-span-2">
+          <div className="relative col-span-12">
             <div
               className="relative w-full h-11 rounded-md bg-[#2A2D35] flex items-center justify-center"
               onClick={() => focusInput('from')}
@@ -62,7 +64,7 @@ const GridBotForm = ({ gridBot, handleGridChange, handleClick, buyingRange }) =>
               <span className="py-2 px-3">USDT</span>
             </div>
           </div>
-          <div className="relative col-span-2">
+          <div className="relative col-span-12">
             <div
               className="relative w-full h-11 rounded-md bg-[#2A2D35] flex items-center justify-center"
               onClick={() => focusInput('to')}
@@ -81,7 +83,7 @@ const GridBotForm = ({ gridBot, handleGridChange, handleClick, buyingRange }) =>
             </div>
           </div>
 
-          <div className="relative col-span-2">
+          <div className="relative col-span-12">
             <div
               className="relative w-full h-11 rounded-md bg-[#2A2D35] flex items-center justify-center"
               onClick={() => focusInput('dollars')}
@@ -100,7 +102,7 @@ const GridBotForm = ({ gridBot, handleGridChange, handleClick, buyingRange }) =>
             </div>
           </div>
 
-          <div className="relative col-span-2">
+          <div className="relative col-span-12">
             <div
               className="relative w-full h-11 rounded-md bg-[#2A2D35] flex items-center justify-center"
               onClick={() => focusInput('totalGrid')}
@@ -110,7 +112,7 @@ const GridBotForm = ({ gridBot, handleGridChange, handleClick, buyingRange }) =>
                 ref={(el) => (inputRefs.current.totalGrid = el)}
                 type="number"
                 value={gridBot.totalGrid}
-                placeholder="0.0"
+                placeholder="00"
                 name="totalGrid"
                 onChange={handleGridChange}
                 className="flex-1 w-full h-full p-2 border-0 outline-none bg-transparent text-end"
@@ -119,7 +121,7 @@ const GridBotForm = ({ gridBot, handleGridChange, handleClick, buyingRange }) =>
             </div>
           </div>
 
-          <div className="realative col-span-2">
+          <div className="realative col-span-12">
             <div
               className="relative w-full h-11 rounded-md bg-[#2A2D35] flex items-center justify-center"
               onClick={() => focusInput('slippage')}
@@ -138,7 +140,7 @@ const GridBotForm = ({ gridBot, handleGridChange, handleClick, buyingRange }) =>
             </div>
           </div>
 
-          <div className="relative col-span-2">
+          <div className="relative col-span-12">
             <div
               className="relative w-full h-11 rounded-md bg-[#2A2D35] flex items-center justify-center"
               onClick={() => focusInput('profitPercentage')}
@@ -157,7 +159,7 @@ const GridBotForm = ({ gridBot, handleGridChange, handleClick, buyingRange }) =>
             </div>
           </div>
 
-          <div className="relative col-span-4">
+          <div className="relative col-span-12">
             <button
               type="button"
               className="relative inline-block w-full h-full min-h-11 bg-[#11e7b0] hover:bg-[#14b38a]  text-white rounded-md"

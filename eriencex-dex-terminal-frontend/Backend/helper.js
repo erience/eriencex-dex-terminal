@@ -8,8 +8,23 @@ const appPath = app.getPath('userData')
 
 const parentDir = path.join(appPath, 'data')
 const logsDir = path.join(parentDir, 'logs')
+if (!fs.existsSync(parentDir)) {
+  fs.mkdir(parentDir, (err) => {
+    if (err) {
+      console.error('Error creating directory:', err);
+    } else {
+      console.log('Directory created successfully.');
+    }
+  });
+}
 if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir)
+  fs.mkdir(logsDir, (err) => {
+    if (err) {
+      console.error('Error creating directory:', err);
+    } else {
+      console.log('Directory created successfully.');
+    }
+  });
 }
 const logFilePath = path.join(logsDir, 'Gridbot.txt')
 const logger = winston.createLogger({
@@ -240,11 +255,27 @@ export const cancelAllOrders = async (openOrders) => {
   }
 }
 
-export const clearJSON = async () => {
+export const clearJSON = async (gridId) => {
   try {
+    console.log("Inside ClearJson", gridId)
     const db = await getCacheData()
-    db.Limitorders = []
-    db.orders = []
+    const limitOrders = db.Limitorders;
+    let newLimitOrders = []
+    if (limitOrders.length > 0) {
+      newLimitOrders = limitOrders.filter((order) => {
+        return order.gridSettingid != gridId
+      })
+    }
+    const orders = db.orders;
+    let newOrders = []
+
+    if (orders.length > 0) {
+      newOrders = orders.filter((order) => {
+        return order.gridSettingid != gridId
+      })
+    }
+    db.Limitorders = newLimitOrders
+    db.orders = newOrders
     await saveCacheData(db)
   } catch (err) {
     console.log('Error clearing JSON files:', err)

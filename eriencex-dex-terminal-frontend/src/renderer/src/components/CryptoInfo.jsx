@@ -9,6 +9,7 @@ import {
   setPair,
   setTickerDecimals
 } from '../redux-toolkit/dataSlice.js'
+import Banner from '../assets/Banner.png'
 
 const CryptoInfo = () => {
   const { pair, webSocketURL, cryptoPair, tradesData, server, tickerDecimals } =
@@ -318,13 +319,15 @@ const CryptoInfo = () => {
             <div className="relative">
               <h3 className="text-gray-400 text-xs">1h Funding Rate</h3>
               <p
-                className={`text-xs font-light text-right ${
-                  fundingRate > 0 ? 'primary-color' : 'secondary-color'
-                }`}
+                className={`text-xs font-light text-right ${fundingRate > 0 ? 'primary-color' : 'secondary-color'
+                  }`}
               >
                 {formatWithCommas(fundingRate, 6)}%
               </p>
             </div>
+          </div>
+          <div className=''>
+            <img src={Banner} alt="AdBanner" />
           </div>
         </div>
       </div>
