@@ -47,6 +47,52 @@ export const getAssetPrice = async (netWorkType: any, pair: string) => {
   return { status: false, price: 0 };
 };
 
+export const getActiveOrder = async (
+  netWorkType: any,
+  address: any,
+  subAccountNo: any
+) => {
+  const maxRetries = 200;
+  let retries = 0;
+  let delay = 1000;
+  while (retries < maxRetries) {
+    try {
+      // Mainnet
+      // https://indexer.dydx.trade/v4
+
+      // TestNet
+      // https://dydx-testnet.imperator.co/v4
+
+      // TestNet
+      let response: any;
+
+      if (netWorkType == "TESTNET") {
+        response = await axios.get(
+          `https://dydx-testnet.imperator.co/v4/orders?address=${address}&subaccountNumber=${subAccountNo}&status=OPEN`
+        );
+      } else if (netWorkType == "MAINNET") {
+        response = await axios.get(
+          `https://indexer.dydx.trade/v4/orders?address=${address}&subaccountNumber=${subAccountNo}&status=OPEN`
+        );
+      }
+
+      const data = response.data;
+
+      return { status: true, orders: data };
+    } catch (error) {
+      if (error.response && error.response.status === 429) {
+        await delayRetry(delay);
+        delay *= 2;
+        retries++;
+      } else {
+        console.log(`Error fetching asset price:`, error);
+        return { status: false, orders: [] };
+      }
+    }
+  }
+  return { status: false, orders: [] };
+};
+
 export const getMarketInfo = async (netWorkType: any, pair: string) => {
   const maxRetries = 200;
   let retries = 0;

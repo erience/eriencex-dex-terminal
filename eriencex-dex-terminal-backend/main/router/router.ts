@@ -1,6 +1,7 @@
 import express from "express";
 import {
   cancelOrder,
+  cancelOrderInbatch,
   executeCopyLimitorder,
   executeLimitorder,
   executeOrder,
@@ -16,6 +17,7 @@ const router = express
   .post("/executeCopyLimitorder", executeCopyLimitorder)
   .post("/order", executeOrder)
   .post("/cancelOrder", cancelOrder)
-  .post("/getWalletfrommemonic", getWalletAddressfromMemonic);
+  .post("/getWalletfrommemonic", getWalletAddressfromMemonic)
+  .post("/cancleGridBotOrder", cancelOrderInbatch);
 
 export default router;

@@ -1,5 +1,8 @@
 import { decryptRSA } from "../helper/helper";
-import { globalMainnetClient, globalTestnetClient } from "./GlobalClient";
+import {
+  globalMainnetCompClient,
+  globalTestnetCompClient,
+} from "./GlobalClient";
 
 type DydxV4Client = {
   BECH32_PREFIX: string;
@@ -44,7 +47,7 @@ export async function getOrCreateWallet(
 
   const wallet = await LocalWallet.fromMnemonic(mnemonic, BECH32_PREFIX);
   const client =
-    network === "MAINNET" ? globalMainnetClient : globalTestnetClient;
+    network === "MAINNET" ? globalMainnetCompClient : globalTestnetCompClient;
   // @ts-ignore
   await client.populateAccountNumberCache(wallet.address);
 

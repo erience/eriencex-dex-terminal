@@ -8,6 +8,7 @@ import {
   SubaccountClient,
   IndexerClient,
   ValidatorClient,
+  BECH32_PREFIX,
 } from "@dydxprotocol/v4-client-js";
 import dotenv from "dotenv";
 
@@ -15,6 +16,7 @@ dotenv.config();
 import {
   calculateSecond,
   generateCustomOrderid,
+  getActiveOrder,
   getAssetPrice,
 } from "../helper/helper";
 import {
@@ -23,8 +25,10 @@ import {
 } from "../models/UserAddress";
 import { getOrCreateWallet } from "../services/WalletCache";
 import {
-  globalMainnetClient,
-  globalTestnetClient,
+  globalMainnetCompClient,
+  globalMainnetIndexerClient,
+  globalTestnetCompClient,
+  globalTestnetIndexerClient,
 } from "../services/GlobalClient";
 interface UserAddressResult {
   userAddress: string;
@@ -123,7 +127,9 @@ export const executeCopyLimitorder = async (req: any, res: any) => {
     }
 
     const client =
-      value.network === "MAINNET" ? globalMainnetClient : globalTestnetClient;
+      value.network === "MAINNET"
+        ? globalMainnetCompClient
+        : globalTestnetCompClient;
     const wallet = await getOrCreateWallet(value.memonic, value.network);
     // @ts-ignore
     const subaccount = new SubaccountClient(wallet, 0);
@@ -276,7 +282,9 @@ export const executeLimitorder = async (req: any, res: any) => {
     }
 
     const client =
-      value.network === "MAINNET" ? globalMainnetClient : globalTestnetClient;
+      value.network === "MAINNET"
+        ? globalMainnetCompClient
+        : globalTestnetCompClient;
     const currentPrice = await getAssetPrice(value.network, value.pair);
 
     if (currentPrice.status == false) {
@@ -441,7 +449,9 @@ export const executeOrder = async (req: any, res: any) => {
       NETWORK = Network.mainnet();
     }
     const client =
-      value.network === "MAINNET" ? globalMainnetClient : globalTestnetClient;
+      value.network === "MAINNET"
+        ? globalMainnetCompClient
+        : globalTestnetCompClient;
     const indexerClient = new IndexerClient(NETWORK.indexerConfig);
     const currentHeight = await indexerClient._utility.getHeight();
     let marketInfo = null;
@@ -568,7 +578,9 @@ export const cancelOrder = async (req: any, res: any) => {
     }
 
     const client =
-      value.network === "MAINNET" ? globalMainnetClient : globalTestnetClient;
+      value.network === "MAINNET"
+        ? globalMainnetCompClient
+        : globalTestnetCompClient;
     const wallet = await getOrCreateWallet(value.memonic, value.network);
 
     // @ts-ignore
@@ -642,6 +654,108 @@ export const cancelOrder = async (req: any, res: any) => {
       console.log("Error while cancel order", error);
       return res.status(400).json({ status: false, message: error.message });
     }
+  } catch (error) {
+    console.log("Error while cancel order", error);
+    return res.status(400).json({ status: false, message: error.message });
+  }
+};
+
+// To cancel GridBot Order In Batch
+export const cancelOrderInbatch = async (req: any, res: any) => {
+  const schema = Joi.object({
+    orderIds: Joi.array().required(),
+    memonic: Joi.string().required(),
+    network: Joi.string().valid("MAINNET", "TESTNET").required(),
+  });
+  try {
+    const { error, value } = schema.validate(req.body);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+    const client =
+      value.network === "MAINNET"
+        ? globalMainnetCompClient
+        : globalTestnetCompClient;
+    const wallet = await getOrCreateWallet(value.memonic, value.network);
+    const subaccount = new SubaccountClient(wallet, 0);
+
+    const orders = await getActiveOrder(
+      value.network,
+      subaccount.address,
+      subaccount.subaccountNumber
+    );
+    if (
+      value.orderIds.length > 0 &&
+      orders.status &&
+      orders.orders.length > 0
+    ) {
+      const ActiveOrders = orders.orders;
+      for (const orderId of value.orderIds) {
+        const orderToCancel = ActiveOrders.find(
+          (order: any) => Number(order.clientId) === orderId
+        );
+        if (orderToCancel) {
+          // @ts-ignore
+          let goodTilBlock: any;
+          try {
+            if (Number(orderToCancel.orderFlags) == 0) {
+              const currentBlock =
+                await client.validatorClient.get.latestBlockHeight();
+              const nextValidBlockHeight = currentBlock + 1;
+              goodTilBlock = nextValidBlockHeight + 10;
+            } else {
+              goodTilBlock = orderToCancel.goodTilBlock;
+            }
+            const currentTime = Date.now();
+
+            const cancleOrderWithRetry = async (retryCount = 0) => {
+              try {
+                const tx = await client.cancelOrder(
+                  subaccount,
+                  orderToCancel.clientId,
+                  Number(orderToCancel.orderFlags),
+                  orderToCancel.ticker,
+                  // goodTilBlock
+                  0,
+                  Math.round(
+                    new Date(orderToCancel.goodTilBlockTime).getTime() / 1000
+                  ) -
+                    currentTime / 1000
+                );
+                // @ts-ignore
+                const hash = Uint8Array.from(tx?.hash);
+                const hashString = Array.from(hash, (byte) =>
+                  ("0" + (byte & 0xff).toString(16)).slice(-2)
+                ).join("");
+              } catch (err) {
+                if (
+                  err.message.includes("sequence mismatch") &&
+                  retryCount < 10
+                ) {
+                  console.log(
+                    `Sequence mismatch detected. while cancelling Retrying... Attempt #${
+                      retryCount + 1
+                    }`
+                  );
+                  await delay(5000);
+                  return cancleOrderWithRetry(retryCount + 1);
+                } else {
+                  console.log("Error during order cancelletion", err);
+                }
+              }
+            };
+
+            await cancleOrderWithRetry();
+          } catch (error) {
+            console.log("Error while cancel order", error);
+          }
+        }
+      }
+    }
+    return res
+      .status(200)
+      .json({ status: true, message: "All Orders Cancelled" });
   } catch (error) {
     console.log("Error while cancel order", error);
     return res.status(400).json({ status: false, message: error.message });
