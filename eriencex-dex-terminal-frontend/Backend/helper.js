@@ -248,6 +248,16 @@ export const cancelAllOrders = async (openOrders) => {
         })
       }
     }
+    db.orders.forEach((order) => {
+      order.isMarketFilled = false
+      order.isOrderOpen = false
+      order.isthisbuylimitOrder = false
+    })
+    db.Limitorders.forEach((order) => {
+      order.isOrderOpen = false
+      order.limitOrderClosed = true
+    })
+    await saveCacheData(db)
     // TODO:
     // await clearJSON()
   } catch (error) {

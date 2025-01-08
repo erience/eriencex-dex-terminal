@@ -2,7 +2,7 @@ import React, { forwardRef, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { formatPairName, showToast } from '../utils/helper'
 import { useDispatch, useSelector } from 'react-redux'
-import { selectData } from '../redux-toolkit/dataSlice'
+import { selectData, setCopyBotLog } from '../redux-toolkit/dataSlice'
 import { MdExpandLess, MdExpandMore } from 'react-icons/md'
 import { FaInfoCircle } from 'react-icons/fa'
 import AboutCopyBotModal from './AboutCopyBotModal'
@@ -128,7 +128,7 @@ const CopyTradeBot = forwardRef(function CopyTradeBot(props, ref) {
           !data.message.startsWith('Bad status on response')
         ) {
           showToast(data.message, 'success')
-          dispatch(setCopyBotLog({ ticker: order.ticker, status: "BuyOrderPlaced" }))
+          dispatch(setCopyBotLog({ actionType: "set", data: { ticker: order.ticker, status: "BuyOrderPlaced" } }))
         }
         return data
       }
@@ -170,7 +170,7 @@ const CopyTradeBot = forwardRef(function CopyTradeBot(props, ref) {
           !data.message.startsWith('Bad status on response')
         ) {
           showToast(data.message, 'success')
-          dispatch(setCopyBotLog({ ticker: order.ticker, status: "SellOrderPlaced" }))
+          dispatch(setCopyBotLog({ actionType: "set", data: { ticker: order.ticker, status: "SellOrderPlaced" } }))
         }
         return data
       }
@@ -229,17 +229,17 @@ const CopyTradeBot = forwardRef(function CopyTradeBot(props, ref) {
             } else {
               // console.log(`Not Buying Or Selling Order cause of not in selected market ${order?.ticker}`)
               if (order?.ticker === "BUY") {
-                dispatch(setCopyBotLog({ ticker: order.ticker, status: "BuyOrderSkipped" }))
+                dispatch(setCopyBotLog({ actionType: "set", data: { ticker: order.ticker, status: "BuyOrderSkipped" } }))
               }
               if (order?.ticker === "SELL") {
-                dispatch(setCopyBotLog({ ticker: order.ticker, status: "SellOrderSkipped" }))
+                dispatch(setCopyBotLog({ actionType: "set", data: { ticker: order.ticker, status: "SellOrderSkipped" } }))
               }
 
             }
           }
         } else if (responseData.contents?.orders?.length > 0 && (responseData.contents?.orders[0]?.status != "CANCELED" || responseData.contents?.orders[0]?.status != "BEST_EFFORT_CANCELED")) {
           // TODO:
-          dispatch(setCopyBotLog({ ticker: order.ticker, status: "OrderSkipped" }))
+          dispatch(setCopyBotLog({ actionType: "set", data: { ticker: responseData.contents?.orders[0]?.ticker, status: "OrderSkipped" } }))
         }
       }
 
@@ -259,6 +259,7 @@ const CopyTradeBot = forwardRef(function CopyTradeBot(props, ref) {
         }
         console.log("Ws Closed", { closeRef: closeRef.current })
         closeRef.current = false
+        dispatch(setCopyBotLog({ actionType: "empty", data: [] }))
         console.log("After Ws Closed", { closeRef: closeRef.current })
         // setIsWebScoketConnected(false)
       }

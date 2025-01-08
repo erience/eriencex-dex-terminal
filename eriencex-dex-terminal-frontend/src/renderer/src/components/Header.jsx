@@ -17,6 +17,7 @@ import {
 import InternetWarningModal from './InternetWarningModal'
 import { IoMdWifi } from 'react-icons/io'
 import { MdPortableWifiOff } from 'react-icons/md'
+import Announcement from './Announcement'
 
 
 const Header = () => {
@@ -106,26 +107,26 @@ const Header = () => {
             <div className="flex items-center gap-10">
               <div className='flex items-center gap-3'>
 
-              <a href="#" className="relative block">
-                <img src={erienceLogo} alt="logo" className="w-[150px]" />
-              </a>
-              <span className="scale-150">🤝</span>
-              <a href="#" className="relative block">
-                <img src={logo} alt="logo" className="w-[100px]" />
-              </a>
+                <a href="#" className="relative block">
+                  <img src={erienceLogo} alt="logo" className="w-[150px]" />
+                </a>
+                <span className="scale-150">🤝</span>
+                <a href="#" className="relative block">
+                  <img src={logo} alt="logo" className="w-[100px]" />
+                </a>
               </div>
-            <div className={isOnline ? 'primary-color' : 'secondary-color'}>
-              {isOnline ? (
-                <div className='flex justify-center items-center gap-1'>
-                  <IoMdWifi  className="primary-color" size={20} /> Terminal Connected
-                </div>
-              ) : (
-                <div className='flex justify-center items-center gap-1'>
-                  <MdPortableWifiOff  className="secondary-color" size={20} /> Terminal Disconnected
-                </div>
+              <div className={isOnline ? 'primary-color' : 'secondary-color'}>
+                {isOnline ? (
+                  <div className='flex justify-center items-center gap-1'>
+                    <IoMdWifi className="primary-color" size={20} /> Terminal Connected
+                  </div>
+                ) : (
+                  <div className='flex justify-center items-center gap-1'>
+                    <MdPortableWifiOff className="secondary-color" size={20} /> Terminal Disconnected
+                  </div>
 
-              )}
-            </div>
+                )}
+              </div>
             </div>
 
 
@@ -152,6 +153,7 @@ const Header = () => {
               <MemonicModal />
             </div>
           </div>
+          <Announcement />
         </div>
       </header>
       {/* {isOnline == false && <InternetWarningModal />} */}

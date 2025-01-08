@@ -110,11 +110,10 @@ const executeOtherOrders = async (
           isthisbuylimitOrder: true,
           gridindex: gridindex - (i + 3)
         }
-
-        console.log("GridIndex-1", gridindex - (i + 3))
         db.orders.push(generateOrderData)
-
         await saveCacheData(db)
+        console.log("GridIndex-1", gridindex - (i + 3))
+
 
         setTimeout(async () => {
           let passData = {
@@ -134,9 +133,18 @@ const executeOtherOrders = async (
             orderid: `${generateOrderData.systemId}`
           }
           // console.log('pass data in In Execute Other Order', passData) 
-          const limitorder = await axios.post(`${url}api/v1/limitorder`, passData);
+          try {
+            const limitorder = await axios.post(`${url}api/v1/limitorder`, passData);
+
+          } catch (error) {
+            db.orders.filter((order) => {
+              return order.systemId != generateOrderData.systemId
+            })
+            await saveCacheData(db)
+            console.log("Error while placing order in executeOtherOrder", error)
+          }
           saveLog(`Buy Order Placed In Execute Other Order systemId: ${orderId}`)
-        }, i * 5000)
+        }, 500)
       } else {
       }
     }
@@ -287,13 +295,13 @@ const getPrice = async (prices, size, url) => {
                         const mergeOrders = [...limitOrdersOld, ...findMarketLimitOrders]
                         const getSystemId = mergeOrders.map((x) => x.systemId)
                         // console.log('all systemId: ', getSystemId)
-                        // saveLog(`ALL SYSTEM ID'S --- ${getSystemId}`)
+                        saveLog(`ALL SYSTEM ID'S --- ${getSystemId}`)
 
                         //console.log('findMarketLimitOrders---', findMarketLimitOrders)
 
                         const totalLimitOrders =
                           findMarketLimitOrders.length + limitOrdersOld.length + mergeOrderOpen
-
+                        console.log({ totalLimitOrders })
                         // console.log('totalLimitOrders---', totalLimitOrders)
                         // console.log('userEquity',equity)
                         // console.log('getOrderLimit(Number(equity)---', getOrderLimit(Number(equity)))
@@ -330,12 +338,13 @@ const getPrice = async (prices, size, url) => {
                           isthisbuylimitOrder: false,
                           gridindex: i
                         }
-
                         db.orders.push(generateOrderData)
-                        console.log({
-                          priceBoughtOn: calculatePriceHike(price),
-                          triggerPrice: parseFloat(calculatePriceHike(price) + (calculatePriceHike(price) * profitPercentageC) / 100)
-                        })
+                        await saveCacheData(db)
+
+                        // console.log({
+                        //   priceBoughtOn: calculatePriceHike(price),
+                        //   triggerPrice: parseFloat(calculatePriceHike(price) + (calculatePriceHike(price) * profitPercentageC) / 100)
+                        // })
                         // console.log('above passData in getPrice--')
                         let passData =
                         {
@@ -356,30 +365,38 @@ const getPrice = async (prices, size, url) => {
                         }
 
                         // console.log('pass data in getPrice',passData)
-                        if (marketOrderToPlace) {
-                          // delete passData.triggerPrice
-                          // delete passData.oType
-                          // delete passData.price
-                          // delete passData.ordertype
-                          // delete passData.time
-                          // delete passData.orderid
-                          // delete passData.postOnly
-                          // delete passData.timeFrame
-                          // console.log("marketOrderPlaced",passData)
-                          passData.price = calculatePriceHike(price)
-                          passData.triggerPrice = calculatePriceHike(price)
-                          console.log({ price, newPrice: calculatePriceHike(price) })
-                          await axios.post(`${url}api/v1/limitorder`, passData);
-                          // await axios.post(`${url}api/v1/limitorder`, passData);
-                          saveLog(`getPrice buy order placed in if systemId: ${orderId}`)
-                          marketOrderToPlace = false;
-                        } else {
-                          // await axios.post(`${url}api/v1/limitorder`, {...passData,price:calculatePriceHike(price)});
-                          saveLog(`getPrice buy order placed in else systemId: ${orderId}`)
-                          await axios.post(`${url}api/v1/limitorder`, passData);
+                        try {
+                          if (marketOrderToPlace) {
+                            // delete passData.triggerPrice
+                            // delete passData.oType
+                            // delete passData.price
+                            // delete passData.ordertype
+                            // delete passData.time
+                            // delete passData.orderid
+                            // delete passData.postOnly
+                            // delete passData.timeFrame
+                            // console.log("marketOrderPlaced",passData)
+                            passData.price = calculatePriceHike(price)
+                            passData.triggerPrice = calculatePriceHike(price)
+                            // console.log({ price, newPrice: calculatePriceHike(price) })
+                            await axios.post(`${url}api/v1/limitorder`, passData);
+                            // await axios.post(`${url}api/v1/limitorder`, passData);
+                            saveLog(`getPrice buy order placed in if systemId: ${orderId}`)
+                            marketOrderToPlace = false;
+                          } else {
+                            // await axios.post(`${url}api/v1/limitorder`, {...passData,price:calculatePriceHike(price)});
+                            saveLog(`getPrice buy order placed in else systemId: ${orderId}`)
+                            await axios.post(`${url}api/v1/limitorder`, passData);
+                          }
+
+                        } catch (error) {
+                          db.orders.filter((order) => {
+                            return order.systemId != generateOrderData.systemId
+                          })
+                          await saveCacheData(db)
+                          console.log("Error while placing order in getPrice", error)
                         }
 
-                        await saveCacheData(db)
                         await executeOtherOrders(
                           gridToBeAdded,
                           pair,
@@ -390,6 +407,7 @@ const getPrice = async (prices, size, url) => {
                           i,
                           url,
                         )
+
 
                         isTradeHappening = false
                       } else {

@@ -81,7 +81,7 @@ const startWebSocket = async (pair, size, url) => {
       await getUpdatedData()
       console.error('WebSocket error:', err)
 
-      setTimeout(startWebSocket(pair, size), 2000)
+      setTimeout(() => startWebSocket(pair, size, url), 2000)
     })
 
     ws.on('close', async function close() {
@@ -91,7 +91,7 @@ const startWebSocket = async (pair, size, url) => {
       const jsonData = await getCacheData()
       const activeGrid = jsonData?.allGridSettings.some((item) => item.isGridActive)
       if (activeGrid) {
-        setTimeout(startWebSocket(pair, size), 2000)
+        setTimeout(() => startWebSocket(pair, size, url), 2000)
       }
     })
   } catch (error) {

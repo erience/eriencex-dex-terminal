@@ -97,9 +97,14 @@ const dataSlice = createSlice({
       state.isOnline = action.payload
     },
     setCopyBotLog: (state, action) => {
-      state.copyBotLog = [...state.copyBotLog, action.payload];
-      if (state.copyBotLog.length > 1000) {
-        state.copyBotLog = state.copyBotLog.slice(-1000);
+      const { actionType, data } = action.payload
+      if (actionType === "empty") {
+        state.copyBotLog = []
+      } else {
+        state.copyBotLog = [...state.copyBotLog, data];
+        if (state.copyBotLog.length > 1000) {
+          state.copyBotLog = state.copyBotLog.slice(-1000);
+        }
       }
     },
   }

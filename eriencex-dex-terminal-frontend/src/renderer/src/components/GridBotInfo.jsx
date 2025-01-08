@@ -67,6 +67,9 @@ const GridBotInfo = ({ subAccNo }) => {
 
       // Process sell orders
       sellOrders.forEach((order) => {
+        if (order?.isMergeOrder && order.isMergeOrder === true) {
+          return
+        }
         if (order.gridSettingid === gridId) {
           const buyOrder = buyOrders.find((o) => o.systemId === order.limitOrderAgainOrderId)
           if (buyOrder) {
