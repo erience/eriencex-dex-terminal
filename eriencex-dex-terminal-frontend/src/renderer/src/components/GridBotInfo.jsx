@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { showToast } from '../utils/helper'
+import { getOrderLimit, showToast } from '../utils/helper'
 import EditGridModal from './EditGridModal'
 import { FaEdit } from 'react-icons/fa'
 import { FaEye } from 'react-icons/fa6'
@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { selectData, setGridSettings, setJsonData } from '../redux-toolkit/dataSlice'
 
 const GridBotInfo = ({ subAccNo }) => {
-  const { gridSettings, pair, cryptoPair, chainAddress, baseURL, openOrderData, jsonData } =
+  const { gridSettings, pair, cryptoPair, chainAddress, baseURL, openOrderData, jsonData, freeCollateral } =
     useSelector(selectData)
   const [price, setPrice] = useState(0)
   const [editIndex, setEditIndex] = useState(0)
@@ -107,6 +107,39 @@ const GridBotInfo = ({ subAccNo }) => {
     return () => clearInterval(intervalId)
   }, [])
 
+  const validateGridData = (grid) => {
+    if (cryptoPair.length > 0) {
+      const currentPairData = cryptoPair.find((data) => data?.ticker == grid?.pair)
+      const requiredAmount =
+        parseFloat(currentPairData?.oraclePrice) * parseFloat(currentPairData?.stepSize)
+      const usersAmount = parseFloat(grid?.dollars) / parseFloat(grid?.totalGrid)
+      const requireInvestAmount = requiredAmount * parseFloat(grid?.totalGrid)
+      if (usersAmount <= requiredAmount) {
+        showToast(
+          `Insufficient funds to start the grid for "${pair}".\n` +
+          `Required invest Amount: $${requireInvestAmount.toFixed()}\n` +
+          `Your Amount: $${grid?.dollars}\n\n` +
+          `Please increase your investment or adjust the grid settings.`,
+          'error'
+        )
+        return false
+      }
+      return true
+    }
+    return false
+  }
+
+  const calculateFinalSize = (gridData) => {
+    if (gridData) {
+      const currentPrice = calculateCurrentPrice(gridData.pair);
+      const tradePrice = Number(gridData.dollars) / Number(gridData.totalGrid);
+      const rawSize = tradePrice / currentPrice;
+      const stepSize = Number(gridData.stepSize);
+      const finalSize = Math.floor(rawSize / stepSize) * stepSize;
+      return finalSize;
+    }
+  }
+
   const closeGrid = async (index) => {
     setIsBotClosed(true)
     await window.electron.closeGridBot(index)
@@ -138,15 +171,31 @@ const GridBotInfo = ({ subAccNo }) => {
 
   const startGrid = async (grid, index) => {
     if (price) {
+      const isValidate = validateGridData(grid)
+      if (!isValidate) {
+        console.log('Grid data is not valid')
+        return
+      }
+      if (freeCollateral <= 0) {
+        showToast("Your free collateral must be greater than 0 to proceed.", 'error');
+        return
+      }
+      const orderLimit = getOrderLimit(freeCollateral);
+      if (orderLimit <= 0) {
+        showToast("Unable to place order: Free collateral must exceed 0.", 'error');
+        return
+      } else if (openOrderData.length === orderLimit) {
+        showToast("You have reached the maximum order limit. Please cancel some orders or increase your net collateral.", 'error');
+        return
+      }
+      const currentPairData = cryptoPair.find((data) => data.ticker == pair)
+      const finalSize = calculateFinalSize({ ...grid, stepSize: currentPairData.stepSize })
+      const jsonData = await window.electron.getDBData()
       const data = await window.electron.startGridBot(index)
       if (data.status === "false" || data.status === "error") {
         showToast(data.message, 'error')
         return
       }
-      const currentPrice = calculateCurrentPrice(grid.pair)
-      const tradePrice = Number(grid.dollars) / Number(grid.totalGrid)
-      const finalSize = tradePrice / currentPrice
-      const jsonData = await window.electron.getDBData()
       dispatch(setJsonData(jsonData))
 
       if (chainAddress) {
@@ -167,7 +216,6 @@ const GridBotInfo = ({ subAccNo }) => {
   }
 
   const handleGridRanges = (gridData, index) => {
-    console.log({ gridData })
     const difference = Number(gridData.to) - Number(gridData.from)
     const gridRange = difference / Number(gridData.totalGrid)
     calculateGrid(Number(gridData.from), Number(gridData.to), gridRange)

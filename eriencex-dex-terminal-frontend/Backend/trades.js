@@ -125,7 +125,7 @@ const executeOtherOrders = async (
             "price": price,
             "memonic": enMemo,
             "ordertype": "GTT",
-            "time": 5,
+            "time": 1,
             "timeFrame": "minute",
             "reduceOnly": false,
             "postOnly": false,
@@ -300,7 +300,7 @@ const getPrice = async (prices, size, url) => {
                         //console.log('findMarketLimitOrders---', findMarketLimitOrders)
 
                         const totalLimitOrders =
-                          findMarketLimitOrders.length + limitOrdersOld.length + mergeOrderOpen
+                          findMarketLimitOrders.length + limitOrdersOld.length
                         console.log({ totalLimitOrders })
                         // console.log('totalLimitOrders---', totalLimitOrders)
                         // console.log('userEquity',equity)
@@ -356,7 +356,7 @@ const getPrice = async (prices, size, url) => {
                           "price": price,
                           "memonic": enMemo,
                           "ordertype": "GTT",
-                          "time": 5,
+                          "time": 1,
                           "timeFrame": "minute",
                           "reduceOnly": false,
                           "postOnly": false,
@@ -396,17 +396,18 @@ const getPrice = async (prices, size, url) => {
                           await saveCacheData(db)
                           console.log("Error while placing order in getPrice", error)
                         }
-
-                        await executeOtherOrders(
-                          gridToBeAdded,
-                          pair,
-                          profitPercentageC,
-                          gridSettingid,
-                          margintoConsider,
-                          parsedSize,
-                          i,
-                          url,
-                        )
+                        if (totalLimitOrders + 2 < getOrderLimit(Number(equity))) {
+                          await executeOtherOrders(
+                            gridToBeAdded,
+                            pair,
+                            profitPercentageC,
+                            gridSettingid,
+                            margintoConsider,
+                            parsedSize,
+                            i,
+                            url,
+                          )
+                        }
 
 
                         isTradeHappening = false

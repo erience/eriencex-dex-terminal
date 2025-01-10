@@ -70,3 +70,21 @@ export const showToast = (message, type = 'success', customStyle = {}) => {
     style: style
   })
 }
+
+export const getOrderLimit = (equity) => {
+  if (equity < 20) {
+    return 0
+  } else if (equity >= 20 && equity < 100) {
+    return 4
+  } else if (equity >= 100 && equity < 1000) {
+    return 8
+  } else if (equity >= 1000 && equity < 10000) {
+    return 10
+  } else if (equity >= 10000 && equity < 100000) {
+    return 100
+  } else if (equity >= 100000) {
+    return 200
+  } else {
+    return 6
+  }
+}

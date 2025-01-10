@@ -98,6 +98,7 @@ const BuySell = () => {
       const currentPairData = cryptoPair.find((data) => data.ticker == pair)
       const requiredAmount =
         parseFloat(currentPairData.oraclePrice) * parseFloat(currentPairData.stepSize)
+      console.log({ requiredAmount })
       const usersAmount = parseFloat(gridBot.dollars) / parseFloat(gridBot.totalGrid)
       const requireInvestAmount = requiredAmount * parseFloat(gridBot.totalGrid)
       if (usersAmount <= requiredAmount) {
@@ -153,9 +154,11 @@ const BuySell = () => {
 
   const calculateFinalSize = (gridData) => {
     if (gridData) {
-      const tradePrice = Number(gridData.dollars) / Number(gridData.totalGrid)
-      const finalSize = tradePrice / Number(price)
-      return finalSize
+      const tradePrice = Number(gridData.dollars) / Number(gridData.totalGrid);
+      const rawSize = tradePrice / Number(price);
+      const stepSize = Number(gridData.stepSize);
+      const finalSize = Math.floor(rawSize / stepSize) * stepSize;
+      return finalSize;
     }
   }
 
@@ -169,7 +172,8 @@ const BuySell = () => {
       console.log('Grid data is not valid')
       return
     }
-    const finalSize = calculateFinalSize(gridData)
+    const currentPairData = cryptoPair.find((data) => data.ticker == pair)
+    const finalSize = calculateFinalSize({ ...gridData, stepSize: currentPairData.stepSize })
     const gridId = Math.floor(100000 + Math.random() * 900000).toString()
     const updatedGridBot = {
       ...gridBot,

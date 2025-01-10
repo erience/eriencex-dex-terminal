@@ -64,7 +64,10 @@ const startWebSocket = async (pair, size, url) => {
       // console.log('Message in subaccount websocket')
       const message = JSON.parse(data)
       await getUpdatedData()
-
+      if (message?.type === "error") {
+        console.error('startWebSocket error:', message)
+        setTimeout(() => startWebSocket(pair, size, url), 2000)
+      }
       if (message.type === 'channel_data' || message.type === 'subscribed') {
         // console.log('inside if', { message })
 
