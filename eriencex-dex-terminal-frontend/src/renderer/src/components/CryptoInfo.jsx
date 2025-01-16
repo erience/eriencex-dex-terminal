@@ -142,7 +142,13 @@ const CryptoInfo = () => {
         }
       }
 
-      webSocket.onerror = (event) => console.error('WebSocket encountered error:', event)
+      webSocket.onerror = (event) => {
+        console.error('WebSocket encountered error:', event)
+        wsReconnectRef.current = setTimeout(() => {
+          console.log('Attempting to reconnect WebSocket...')
+          getCoinInfo()
+        }, 1000)
+      }
       webSocket.onclose = () => {
         console.error('Websocket connection closed')
         wsReconnectRef.current = setTimeout(() => {

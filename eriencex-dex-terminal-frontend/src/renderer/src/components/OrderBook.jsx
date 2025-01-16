@@ -154,80 +154,92 @@ const OrderBook = () => {
       }
       webSocket.onmessage = function (event) {
         const responseData = JSON.parse(event.data)
-        if (responseData?.id && pair != responseData.id) {
-          closing = true
-          webSocket.close()
-        }
-        if (responseData.channel === 'v4_orderbook') {
-          const order = responseData.contents
-          // console.log('orderBooks', order, responseData)
+        // if (responseData?.id && pair != responseData.id) {
+        //   closing = true
+        //   webSocket.close()
+        // }
+        if (responseData?.id && pair == responseData?.id) {
+          if (responseData.channel === 'v4_orderbook') {
+            const order = responseData.contents
+            // console.log('orderBooks', order, responseData)
 
-          if (responseData?.message_id % 200 == 0) {
-            counter.current = counter.current + 1
-          }
-          if (responseData?.type === "subscribed") {
-
-            if (Object.keys(order).includes('asks') && Object.keys(order).includes('bids')) {
-              const asks = order.asks
-                .map((ask) => ({ price: ask.price, size: ask.size }))
-                .filter((ask) => ask.size != 0)
-              const bids = order.bids
-                .map((bid) => ({ price: bid.price, size: bid.size }))
-                .filter((bid) => bid.size != 0)
-
-              setOrderAsks(asks.slice(0, 20))
-              setOrderBids(bids.slice(0, 20))
-              lastOrderAsksRef.current = asks.slice(0, 20)
-              lastOrderBidsRef.current = bids.slice(0, 20)
+            if (responseData?.message_id % 200 == 0) {
+              counter.current = counter.current + 1
             }
-          }
+            if (responseData?.type === "subscribed") {
 
-          // if (Object.keys(order).includes('bids')) {
-          //   const bids = order['bids'][0]
-          //   order.bids[0][1] &&
-          //     order.bids[0][1] != 0 &&
-          //     setOrderBids((prev) => {
-          //       const newBid = { price: bids[0], size: bids[1] }
-          //       const updatedBids = [newBid, ...prev]
-          //       const latestBids = updatedBids.slice(0, 20).filter((bids) => bids.size != 0)
-          //       return latestBids
-          //     })
-          // }
-          if (Object.keys(order).includes('bids')) {
-            const bids = order['bids'][0]
-            // console.log("Bids in orderbook", bids)
-            if (bids[1] && bids[1] != 0) {
-              const newBid = { price: bids[0], size: bids[1] }
-              const updatedBids = updateOrderList(lastOrderBidsRef.current, newBid)
-              if (JSON.stringify(updatedBids) !== JSON.stringify(lastOrderBidsRef.current)) {
-                lastOrderBidsRef.current = updatedBids
-                setOrderBids(updatedBids)
+              if (Object.keys(order).includes('asks') && Object.keys(order).includes('bids')) {
+                const asks = order.asks
+                  .map((ask) => ({ price: ask.price, size: ask.size }))
+                  .filter((ask) => ask.size != 0)
+                const bids = order.bids
+                  .map((bid) => ({ price: bid.price, size: bid.size }))
+                  .filter((bid) => bid.size != 0)
+
+                setOrderAsks(asks.slice(0, 20))
+                setOrderBids(bids.slice(0, 20))
+                lastOrderAsksRef.current = asks.slice(0, 20)
+                lastOrderBidsRef.current = bids.slice(0, 20)
+              }
+            }
+
+            // if (Object.keys(order).includes('bids')) {
+            //   const bids = order['bids'][0]
+            //   order.bids[0][1] &&
+            //     order.bids[0][1] != 0 &&
+            //     setOrderBids((prev) => {
+            //       const newBid = { price: bids[0], size: bids[1] }
+            //       const updatedBids = [newBid, ...prev]
+            //       const latestBids = updatedBids.slice(0, 20).filter((bids) => bids.size != 0)
+            //       return latestBids
+            //     })
+            // }
+            if (Object.keys(order).includes('bids')) {
+              const bids = order['bids'][0]
+              // console.log("Bids in orderbook", bids)
+              if (bids[1] && bids[1] != 0) {
+                const newBid = { price: bids[0], size: bids[1] }
+                const updatedBids = updateOrderList(lastOrderBidsRef.current, newBid)
+                if (JSON.stringify(updatedBids) !== JSON.stringify(lastOrderBidsRef.current)) {
+                  lastOrderBidsRef.current = updatedBids
+                  setOrderBids(updatedBids)
+                }
+              }
+            }
+
+            // if (Object.keys(order).includes('asks')) {
+            //   const asks = order['asks'][0]
+            //   asks[1] &&
+            //     asks[1] != 0 &&
+            //     setOrderAsks((prev) => {
+            //       const newAsk = { price: asks[0], size: asks[1] }
+            //       const updatedAsks = [newAsk, ...prev]
+            //       const latestAsks = updatedAsks.slice(0, 20).filter((asks) => asks.size != 0)
+            //       return latestAsks
+            //     })
+            // }
+            if (Object.keys(order).includes('asks')) {
+              const asks = order['asks'][0]
+              // console.log("Asks in orderbook", asks)
+              if (asks[1] && asks[1] != 0) {
+                const newAsk = { price: asks[0], size: asks[1] }
+                const updatedAsks = updateOrderList(lastOrderAsksRef.current, newAsk)
+                if (JSON.stringify(updatedAsks) !== JSON.stringify(lastOrderAsksRef.current)) {
+                  lastOrderAsksRef.current = updatedAsks
+                  setOrderAsks(updatedAsks)
+                }
               }
             }
           }
+        } else if (responseData?.id) {
+          const params = {
+            type: 'unsubscribe',
+            channel: 'v4_orderbook',
+            id: responseData?.id
+          }
 
-          // if (Object.keys(order).includes('asks')) {
-          //   const asks = order['asks'][0]
-          //   asks[1] &&
-          //     asks[1] != 0 &&
-          //     setOrderAsks((prev) => {
-          //       const newAsk = { price: asks[0], size: asks[1] }
-          //       const updatedAsks = [newAsk, ...prev]
-          //       const latestAsks = updatedAsks.slice(0, 20).filter((asks) => asks.size != 0)
-          //       return latestAsks
-          //     })
-          // }
-          if (Object.keys(order).includes('asks')) {
-            const asks = order['asks'][0]
-            // console.log("Asks in orderbook", asks)
-            if (asks[1] && asks[1] != 0) {
-              const newAsk = { price: asks[0], size: asks[1] }
-              const updatedAsks = updateOrderList(lastOrderAsksRef.current, newAsk)
-              if (JSON.stringify(updatedAsks) !== JSON.stringify(lastOrderAsksRef.current)) {
-                lastOrderAsksRef.current = updatedAsks
-                setOrderAsks(updatedAsks)
-              }
-            }
+          if (webSocket.readyState == webSocket.OPEN) {
+            webSocket.send(JSON.stringify(params))
           }
         }
       }

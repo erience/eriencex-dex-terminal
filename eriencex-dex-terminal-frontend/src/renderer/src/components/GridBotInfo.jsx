@@ -190,8 +190,8 @@ const GridBotInfo = ({ subAccNo }) => {
       }
       const currentPairData = cryptoPair.find((data) => data.ticker == pair)
       const finalSize = calculateFinalSize({ ...grid, stepSize: currentPairData.stepSize })
-      const jsonData = await window.electron.getDBData()
       const data = await window.electron.startGridBot(index)
+      const jsonData = await window.electron.getDBData()
       if (data.status === "false" || data.status === "error") {
         showToast(data.message, 'error')
         return

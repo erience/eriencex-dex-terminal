@@ -337,6 +337,16 @@ try {
     }
   })
 
+  ipcMain.handle("handle-network-change", async (event) => {
+    try {
+      await handleBeforeQuit();
+      return { status: "success", message: "All Grid Bot Closed" }
+    } catch (error) {
+      console.error("Error while handleNetwotkChange", error);
+      return { status: "error", message: "Failed to close grid bot." };
+    }
+  });
+
   ipcMain.handle('start-grid-bot', async (event, index) => {
     try {
       const jsonData = await getCacheData()
@@ -365,7 +375,7 @@ try {
         }
         jsonData.allGridSettings[index].isGridActive = true
         await saveCacheData(jsonData)
-
+        console.log("JsonDataUpdted")
         return { status: 'success', message: 'Grid started successfully!' }
       } else {
         return { status: 'error', message: 'Invalid index.' }

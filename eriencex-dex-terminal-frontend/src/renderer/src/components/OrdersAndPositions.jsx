@@ -26,7 +26,7 @@ const OrdersAndPositions = () => {
   let x = true
   const orderRef = useRef([])
   const reconnectTimeout = useRef(null)
-
+  const chainAdddressRef = useRef('')
   const PrintLogs = async (message) => {
     await window.electron.printlogs(message)
   }
@@ -54,12 +54,18 @@ const OrdersAndPositions = () => {
 
   const getSubAccountNo = async () => {
     try {
-      if (chainAddress != '') {
+      if (chainAdddressRef.current != '') {
         // console.log('getSubAccount called')
-        const res = await axios.get(`${API}/addresses/${chainAddress}`)
+        const res = await axios.get(`${API}/addresses/${chainAdddressRef.current}`)
         const data = res.data
         // console.log('sub acc no.', data?.subaccounts[0].subaccountNumber)
         setSubAccNo(data?.subaccounts[0].subaccountNumber)
+      } else {
+        setSubAccNo(null)
+        orderRef.current = []
+        setPositionData([])
+        setOrderHistory([])
+        dispatch(setFreeCollateral(0))
       }
     } catch (err) {
       console.log(err)
@@ -72,8 +78,8 @@ const OrdersAndPositions = () => {
 
   const getCollateralValue = async () => {
     try {
-      if (chainAddress != '') {
-        const res = await axios.get(`${API}/addresses/${chainAddress}/subaccountNumber/${subAccNo}`)
+      if (chainAdddressRef.current != '') {
+        const res = await axios.get(`${API}/addresses/${chainAdddressRef.current}/subaccountNumber/${subAccNo}`)
         const data = res.data
         const updatedCollateral = data?.subaccount?.freeCollateral
         dispatch(setFreeCollateral(parseFloat(updatedCollateral)))
@@ -85,154 +91,171 @@ const OrdersAndPositions = () => {
   }
 
   const connectWebSocket = useCallback(() => {
-    try {
-      const webSocket = new WebSocket(webSocketURL)
-      console.log("websocket");
+    // console.log("chain Address in connect websocket", { chainAddress: chainAdddressRef.current, subAccNo })
+    if (chainAdddressRef.current != '') {
+      try {
+        const webSocket = new WebSocket(webSocketURL)
+        console.log("websocket");
 
-      if (reconnectTimeout.current) {
-        console.log("websocket reconnected");
-        clearTimeout(reconnectTimeout.current)
-        reconnectTimeout.current = null
-      }
-
-      webSocket.onopen = function (event) {
-        PrintLogs('orders & position ws connected')
-        // orderRef.current = []
-        // setPositionData([])
-        // setOrderHistory([])
-      }
-
-      webSocket.onmessage = function (event) {
-        const responseData = JSON.parse(event.data)
-        if (x) {
-          x = false
-          const params = {
-            type: 'subscribe',
-            channel: 'v4_subaccounts',
-            id: `${chainAddress}/${subAccNo}`,
-            connection_id: responseData.connection_id
-          }
-          webSocket.send(JSON.stringify(params))
-        } else {
-          // ---------------------------- GET ORDERS ----------------------------
-          if (responseData?.contents?.orders) {
-            const newOrders = responseData?.contents?.orders || []
-            console.log('newOrders:', newOrders)
-
-            const openOrders = newOrders.filter(
-              (order) => order.status === 'OPEN' || order.status === 'BEST_EFFORT_OPENED'
-            )
-
-            // let prevOrders = orderRef.current
-            const filledOrderIds = newOrders
-              .filter(
-                (order) =>
-                  order.status != 'OPEN' &&
-                  order.status != 'UNTRIGGERED' &&
-                  order.status != 'BEST_EFFORT_OPENED'
-              )
-              .map((order) => order.id)
-            let prevOrders = orderRef.current.map((order) => {
-              if (filledOrderIds.includes(order.id)) {
-                return {
-                  ...order,
-                  timestamp: Date.now() + 2 * 1000
-                }
-              }
-              return order
-            })
-
-            // -------------------- REMOVE EXPIRED ORDERS ----------------------
-            const finalOrder = [...openOrders, ...prevOrders]
-            orderRef.current = finalOrder
-          }
-
-          // ------------------------------ GET POSITIONS ------------------------------
-          if (responseData?.contents?.subaccount?.openPerpetualPositions) {
-            setPositionData((prev) => [
-              ...prev,
-              ...Object.values(responseData?.contents?.subaccount?.openPerpetualPositions)
-            ])
-          }
-
-          // ---------------------------- POSITION UPDATE ----------------------------
-          if (responseData?.contents?.perpetualPositions) {
-            const newPositions = responseData?.contents?.perpetualPositions || []
-            const positionsUpdate = responseData?.contents?.perpetualPositions?.filter((item) => {
-              const keys = Object.keys(item)
-              return (
-                keys.includes('realizedPnl') &&
-                keys.includes('unrealizedPnl') &&
-                item.status !== 'CLOSED'
-              )
-            })
-
-            if (positionsUpdate.length > 0) {
-              setPositionData((prevPositions) => {
-                const updatedPositions = prevPositions.filter((prevItem) => {
-                  return !positionsUpdate.find((newItem) => newItem.market === prevItem.market)
-                })
-                return [...updatedPositions, ...positionsUpdate]
-              })
-              // PrintLogs('positionsUpdated in if')
-            } else {
-              setPositionData((prevPositions) => {
-                const updatedPositions = prevPositions.filter((prevItem) => {
-                  return !newPositions.find((newItem) => newItem.market === prevItem.market)
-                })
-                return updatedPositions
-              })
-              // PrintLogs('positionsUpdated in else')
-            }
-          }
-
-          // -------------------------- GET EQUITY --------------------------
-          if (responseData?.contents?.subaccount?.equity) {
-            const accEquity = responseData?.contents?.subaccount?.equity
-            dispatch(setUserEquity(parseFloat(accEquity)))
-          }
-
-          // -------------------------- GET FREE COLLATERAL --------------------------
-          if (responseData?.contents?.subaccount?.freeCollateral) {
-            const avlb = responseData?.contents?.subaccount?.freeCollateral
-            dispatch(setFreeCollateral(parseFloat(avlb)))
-            setUserEquityToJSON(parseFloat(avlb))
-          }
-
-          // -------------------------- GET ORDER FILLS --------------------------
-          if (responseData?.contents?.fills) {
-            const newOrders = responseData?.contents?.fills || []
-            setOrderHistory((prevOrders) => [...newOrders, ...prevOrders])
-            setTimeout(() => {
-              getCollateralValue()
-            }, 2000)
-          }
-        }
-      }
-
-      webSocket.onerror = function (event) {
-        console.error('WebSocket encountered error:', event)
-      }
-
-      webSocket.onclose = function (event) {
-        console.log('WebSocket connection closed.', event)
-        PrintLogs('orders & position ws closed')
-        if (!reconnectTimeout.current) {
-          reconnectTimeout.current = setTimeout(connectWebSocket, 1500)
-        }
-      }
-
-      return () => {
-        webSocket.close()
         if (reconnectTimeout.current) {
+          console.log("websocket reconnected");
           clearTimeout(reconnectTimeout.current)
           reconnectTimeout.current = null
         }
+
+        webSocket.onopen = function (event) {
+          PrintLogs('orders & position ws connected')
+          // orderRef.current = []
+          // setPositionData([])
+          // setOrderHistory([])
+        }
+
+        webSocket.onmessage = function (event) {
+          const responseData = JSON.parse(event.data)
+          if (x) {
+            x = false
+            const params = {
+              type: 'subscribe',
+              channel: 'v4_subaccounts',
+              id: `${chainAdddressRef.current}/${subAccNo}`,
+              connection_id: responseData.connection_id
+            }
+            webSocket.send(JSON.stringify(params))
+          } else {
+            // ---------------------------- GET ORDERS ----------------------------
+            PrintLogs(`Message Received in orders & websocket ${responseData}`)
+
+            if (responseData?.contents?.orders) {
+              const newOrders = responseData?.contents?.orders || []
+              console.log('newOrders:', newOrders)
+
+              const openOrders = newOrders.filter(
+                (order) => order.status === 'OPEN' || order.status === 'BEST_EFFORT_OPENED'
+              )
+
+              // let prevOrders = orderRef.current
+              const filledOrderIds = newOrders
+                .filter(
+                  (order) =>
+                    order.status != 'OPEN' &&
+                    order.status != 'UNTRIGGERED' &&
+                    order.status != 'BEST_EFFORT_OPENED'
+                )
+                .map((order) => order.id)
+              let prevOrders = orderRef.current.map((order) => {
+                if (filledOrderIds.includes(order.id)) {
+                  return {
+                    ...order,
+                    timestamp: Date.now() + 2 * 1000
+                  }
+                }
+                return order
+              })
+
+              // -------------------- REMOVE EXPIRED ORDERS ----------------------
+              const finalOrder = [...openOrders, ...prevOrders]
+              orderRef.current = finalOrder
+            }
+
+            // ------------------------------ GET POSITIONS ------------------------------
+            if (responseData?.contents?.subaccount?.openPerpetualPositions) {
+              setPositionData((prev) => [
+                ...prev,
+                ...Object.values(responseData?.contents?.subaccount?.openPerpetualPositions)
+              ])
+            }
+
+            // ---------------------------- POSITION UPDATE ----------------------------
+            if (responseData?.contents?.perpetualPositions) {
+              const newPositions = responseData?.contents?.perpetualPositions || []
+              const positionsUpdate = responseData?.contents?.perpetualPositions?.filter((item) => {
+                const keys = Object.keys(item)
+                return (
+                  keys.includes('realizedPnl') &&
+                  keys.includes('unrealizedPnl') &&
+                  item.status !== 'CLOSED'
+                )
+              })
+
+              if (positionsUpdate.length > 0) {
+                setPositionData((prevPositions) => {
+                  const updatedPositions = prevPositions.filter((prevItem) => {
+                    return !positionsUpdate.find((newItem) => newItem.market === prevItem.market)
+                  })
+                  return [...updatedPositions, ...positionsUpdate]
+                })
+                // PrintLogs('positionsUpdated in if')
+              } else {
+                setPositionData((prevPositions) => {
+                  const updatedPositions = prevPositions.filter((prevItem) => {
+                    return !newPositions.find((newItem) => newItem.market === prevItem.market)
+                  })
+                  return updatedPositions
+                })
+                // PrintLogs('positionsUpdated in else')
+              }
+            }
+
+            // -------------------------- GET EQUITY --------------------------
+            if (responseData?.contents?.subaccount?.equity) {
+              const accEquity = responseData?.contents?.subaccount?.equity
+              dispatch(setUserEquity(parseFloat(accEquity)))
+            }
+
+            // -------------------------- GET FREE COLLATERAL --------------------------
+            if (responseData?.contents?.subaccount?.freeCollateral) {
+              const avlb = responseData?.contents?.subaccount?.freeCollateral
+              dispatch(setFreeCollateral(parseFloat(avlb)))
+              setUserEquityToJSON(parseFloat(avlb))
+            }
+
+            // -------------------------- GET ORDER FILLS --------------------------
+            if (responseData?.contents?.fills) {
+              const newOrders = responseData?.contents?.fills || []
+              setOrderHistory((prevOrders) => [...newOrders, ...prevOrders])
+              setTimeout(() => {
+                getCollateralValue()
+              }, 2000)
+            }
+          }
+        }
+
+        webSocket.onerror = function (event) {
+          x = true
+          console.error('WebSocket encountered error:', event)
+          console.log('WebSocket connection closed.', event)
+          PrintLogs('orders & position ws closed')
+          if (!reconnectTimeout.current) {
+            reconnectTimeout.current = setTimeout(connectWebSocket, 1500)
+          }
+        }
+
+        webSocket.onclose = function (event) {
+          x = true
+          console.log('WebSocket connection closed.', event)
+          PrintLogs('orders & position ws closed')
+          if (!reconnectTimeout.current) {
+            reconnectTimeout.current = setTimeout(connectWebSocket, 1500)
+          }
+        }
+
+        return () => {
+          webSocket.close()
+          if (reconnectTimeout.current) {
+            clearTimeout(reconnectTimeout.current)
+            reconnectTimeout.current = null
+          }
+        }
+      } catch (error) {
+        console.error('Error during WebSocket connection setup or handling:', error)
       }
-    } catch (error) {
-      console.error('Error during WebSocket connection setup or handling:', error)
+    } else {
+      setSubAccNo(null)
+      orderRef.current = []
+      setPositionData([])
+      setOrderHistory([])
     }
-  }, [webSocketURL, chainAddress, subAccNo])
+  }, [webSocketURL, chainAdddressRef.current, subAccNo])
 
   const memoizedConnectWebSocket = useMemo(() => connectWebSocket, [connectWebSocket])
 
@@ -242,9 +265,10 @@ const OrdersAndPositions = () => {
       const cleanupWebSocket = memoizedConnectWebSocket()
       return cleanupWebSocket
     }
-  }, [subAccNo, server, memoizedConnectWebSocket, setSubAccNo])
+  }, [subAccNo, memoizedConnectWebSocket])
 
   useEffect(() => {
+    chainAdddressRef.current = chainAddress
     getSubAccountNo()
   }, [API, chainAddress, server])
 

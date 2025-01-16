@@ -47,13 +47,22 @@ const MarketTrades = () => {
 
       webSocket.onmessage = function (event) {
         const responseData = JSON.parse(event.data)
-        if (responseData?.id && pair != responseData.id) {
-          closing = true
-          webSocket.close()
-        }
-        if (responseData.channel === 'v4_trades') {
-          const trades = responseData.contents
-          dispatch(setTradesData({ actionType: 'append', data: trades?.trades }))
+        // if (responseData?.id && pair != responseData.id) {
+        //   closing = true
+        //   webSocket.close()
+        // }
+        if (responseData?.id && pair == responseData?.id) {
+          if (responseData.channel === 'v4_trades') {
+            const trades = responseData.contents
+            dispatch(setTradesData({ actionType: 'append', data: trades?.trades }))
+          }
+        } else if (responseData?.id) {
+          const params = {
+            type: 'unsubscribe',
+            channel: 'v4_trades',
+            id: responseData?.id
+          }
+          webSocket.send(JSON.stringify(params))
         }
       }
 
@@ -129,11 +138,10 @@ const MarketTrades = () => {
                       <td
                         className="absolute inset-0 h-full"
                         style={{
-                          background: `${
-                            buy
-                              ? `linear-gradient(to left, rgba(17, 231, 176, 0.3) ${normalizedVolume}%, transparent ${normalizedVolume}%)`
-                              : `linear-gradient(to left, rgba(235, 64, 52, 0.3) ${normalizedVolume}%, transparent ${normalizedVolume}%)`
-                          }`
+                          background: `${buy
+                            ? `linear-gradient(to left, rgba(17, 231, 176, 0.3) ${normalizedVolume}%, transparent ${normalizedVolume}%)`
+                            : `linear-gradient(to left, rgba(235, 64, 52, 0.3) ${normalizedVolume}%, transparent ${normalizedVolume}%)`
+                            }`
                         }}
                       ></td>
                     </tr>

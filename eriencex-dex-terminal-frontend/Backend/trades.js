@@ -228,14 +228,14 @@ const getPrice = async (prices, size, url) => {
                         x.gridindex == i
                     )
                     let marketOrderToPlace = false
-                    const filterActiveOrdersToPlaceMarketOrder = pastOrders.filter(
-                      (x) =>
-                        x.gridSettingid == gridSettingid &&
-                        x.isOrderOpen == true
-                    )
+                    // const filterActiveOrdersToPlaceMarketOrder = pastOrders.filter(
+                    //   (x) =>
+                    //     x.gridSettingid == gridSettingid &&
+                    //     x.isOrderOpen == true
+                    // )
                     // console.log("filterActiveOrdersToPlaceMarketOrder",{filterActiveOrdersToPlaceMarketOrder})
                     // console.log('filterActive-----',filterActiveOrders)
-                    if (filterActiveOrdersToPlaceMarketOrder.length == 0) {
+                    if (pastOrders.length === 0) {
                       marketOrderToPlace = true;
                     }
 
@@ -395,6 +395,7 @@ const getPrice = async (prices, size, url) => {
                           })
                           await saveCacheData(db)
                           console.log("Error while placing order in getPrice", error)
+                          saveLog(`Error while placing order in getPrice, ${error}`)
                         }
                         if (totalLimitOrders + 2 < getOrderLimit(Number(equity))) {
                           await executeOtherOrders(

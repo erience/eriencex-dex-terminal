@@ -13,6 +13,9 @@ contextBridge.exposeInMainWorld('electron', {
   closeGridBot: (index) => {
     return ipcRenderer.invoke('close-grid-bot', index)
   },
+  handleNetworkChange: () => {
+    return ipcRenderer.invoke("handle-network-change");
+  },
   startGridBot: (index) => {
     return ipcRenderer.invoke('start-grid-bot', index)
   },

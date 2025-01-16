@@ -240,7 +240,7 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
                       price: avgSellPriceWithProfit,
                       memonic: enMemo,
                       ordertype: 'GTT',
-                      time: 1,
+                      time: 28,
                       timeFrame: 'day',
                       reduceOnly: false,
                       postOnly: false,
@@ -294,12 +294,15 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
                         console.log("response after cancelling order", response.data)
                         if (response.data.canceledOrders && response.data.canceledOrders.length > 0) {
                           passData.orderid = generateAvgLimitOrderData.systemId
+                          let totalCancelledOrder = 1
                           let canceledOrderSize = sizeFromFills
                           let canceledOrderPrice = Number(price)
                           response.data.canceledOrders.forEach((order) => {
-                            canceledOrderSize += Number(order.size)
+                            totalCancelledOrder += Number(order.size) / sizeFromFills
+                            // canceledOrderSize += Number(order.size)
                             canceledOrderPrice += Number(order.price)
                           })
+                          canceledOrderSize = totalCancelledOrder * size
                           console.log({ result: canceledOrderSize != totalSize, canceledOrderSize, totalSize, canceledOrderPrice })
                           if (canceledOrderSize != totalSize) {
                             let avgSellPrice = Number(canceledOrderPrice / (response.data.canceledOrders.length + 1))
@@ -338,10 +341,13 @@ const startWebSocketSubAccount = async (address, size, url, grid) => {
                     await saveCacheData(db)
                     try {
                       await axios.post(`${url}api/v1/limitorder`, passData)
+                      saveLog(`Sell Order Placed orderId:${passData.orderid}`)
                     } catch (error) {
+                      saveLog(`Error while placing Sell Order orderId:${passData.orderid} error:${error}`)
                       console.log("Error while placing sell order", error)
+                      saveLog(`Error while placing sell order ${error}`)
                     }
-                  }, 100)
+                  }, 1000)
                 }
               }
             } else {

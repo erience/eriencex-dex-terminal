@@ -418,7 +418,7 @@ const BuySell = () => {
         })
         const data = res.data
         showToast(data.message, 'success')
-        setLimit({ ...limit, buyLimitPrice: '', buySize: '', buyTotal: '', buyTime: '' })
+        setLimit({ ...limit, buyLimitPrice: '', buySize: '', buyTotal: '', buyTime: '28' })
         setBuyLoading(false)
       } else {
         showToast('Please provide memonic first', 'warning')
@@ -433,29 +433,34 @@ const BuySell = () => {
 
   const limitSell = async () => {
     try {
-      setSellLoading(true)
-      const timeValue = limit.sellTimeInForce === 'IOC' ? 0 : parseFloat(limit.sellTime)
-      const res = await axios.post(`${baseURL}api/v1/limitorder`, {
-        pair: pair,
-        size: parseFloat(limit.sellSize),
-        side: 'sell',
-        triggerPrice: parseFloat(limit.sellLimitPrice),
-        oType: 'LIMIT',
-        price: parseFloat(limit.sellLimitPrice),
-        memonic: enMemonic,
-        ordertype: limit.sellTimeInForce,
-        orderid: generateOrderid(6, 'LimitSell'),
-        time: timeValue,
-        timeFrame: limit.sellTimeFrame,
-        reduceOnly: limit.sellReduceOnly,
-        postOnly: limit.sellPostOnly,
-        network: server
-      })
-      const data = res.data
-      showToast(data.message, 'success')
-      setLimit({ ...limit, sellLimitPrice: '', sellSize: '', sellTotal: '', sellTime: '' })
+      if (memonic != '') {
+        setSellLoading(true)
+        const timeValue = limit.sellTimeInForce === 'IOC' ? 0 : parseFloat(limit.sellTime)
+        const res = await axios.post(`${baseURL}api/v1/limitorder`, {
+          pair: pair,
+          size: parseFloat(limit.sellSize),
+          side: 'sell',
+          triggerPrice: parseFloat(limit.sellLimitPrice),
+          oType: 'LIMIT',
+          price: parseFloat(limit.sellLimitPrice),
+          memonic: enMemonic,
+          ordertype: limit.sellTimeInForce,
+          orderid: generateOrderid(6, 'LimitSell'),
+          time: timeValue,
+          timeFrame: limit.sellTimeFrame,
+          reduceOnly: limit.sellReduceOnly,
+          postOnly: limit.sellPostOnly,
+          network: server
+        })
+        const data = res.data
+        showToast(data.message, 'success')
+        setLimit({ ...limit, sellLimitPrice: '', sellSize: '', sellTotal: '', sellTime: '28' })
 
-      setSellLoading(false)
+        setSellLoading(false)
+      } else {
+        showToast('Please provide memonic first', 'warning')
+        setSellLoading(false)
+      }
     } catch (error) {
       setSellLoading(false)
       showToast(`Error placing order ${error.response.data.message}`, 'error')
@@ -610,20 +615,25 @@ const BuySell = () => {
 
   const marketBuy = async () => {
     try {
-      setBuyLoading(true)
-      const res = await axios.post(`${baseURL}api/v1/order`, {
-        pair: pair,
-        size: parseFloat(market.buySize),
-        side: 'buy',
-        memonic: enMemonic,
-        reduceOnly: false,
-        network: server
-      })
-      const data = res.data
-      showToast(data.message, 'success')
+      if (memonic != '') {
+        setBuyLoading(true)
+        const res = await axios.post(`${baseURL}api/v1/order`, {
+          pair: pair,
+          size: parseFloat(market.buySize),
+          side: 'buy',
+          memonic: enMemonic,
+          reduceOnly: false,
+          network: server
+        })
+        const data = res.data
+        showToast(data.message, 'success')
 
-      setBuyLoading(false)
-      setMarket({ ...market, buyPrice: '', buySize: '', buyTotal: '', buyReduceOnly: false })
+        setBuyLoading(false)
+        setMarket({ ...market, buyPrice: '', buySize: '', buyTotal: '', buyReduceOnly: false })
+      } else {
+        showToast('Please provide memonic first', 'warning')
+        setBuyLoading(false)
+      }
     } catch (error) {
       showToast(`Error placing order ${error.response.data.message}`, 'error')
       setBuyLoading(false)
@@ -632,20 +642,25 @@ const BuySell = () => {
 
   const marketSell = async () => {
     try {
-      setSellLoading(true)
-      const res = await axios.post(`${baseURL}api/v1/order`, {
-        pair: pair,
-        size: parseFloat(market.sellSize),
-        side: 'sell',
-        memonic: enMemonic,
-        reduceOnly: false,
-        network: server
-      })
-      const data = res.data
-      showToast(data.message, 'success')
+      if (memonic != '') {
+        setSellLoading(true)
+        const res = await axios.post(`${baseURL}api/v1/order`, {
+          pair: pair,
+          size: parseFloat(market.sellSize),
+          side: 'sell',
+          memonic: enMemonic,
+          reduceOnly: false,
+          network: server
+        })
+        const data = res.data
+        showToast(data.message, 'success')
 
-      setSellLoading(false)
-      setMarket({ ...market, sellPrice: '', sellSize: '', sellTotal: '', sellReduceOnly: false })
+        setSellLoading(false)
+        setMarket({ ...market, sellPrice: '', sellSize: '', sellTotal: '', sellReduceOnly: false })
+      } else {
+        showToast('Please provide memonic first', 'warning')
+        setSellLoading(false)
+      }
     } catch (error) {
       setSellLoading(false)
       showToast(`Error placing order ${error.response.data.message}`, 'error')

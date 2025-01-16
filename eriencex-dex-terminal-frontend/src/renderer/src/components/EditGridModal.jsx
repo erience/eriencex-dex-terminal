@@ -12,7 +12,7 @@ const EditGridModal = ({ index }) => {
     totalGrid: '',
     slippage: '',
     profitPercentage: '',
-    isGridActive: true
+    isGridActive: false
   }
   const [gridBot, setGridBot] = useState(initialstate)
 

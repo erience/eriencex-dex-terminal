@@ -18,6 +18,7 @@ import InternetWarningModal from './InternetWarningModal'
 import { IoMdWifi } from 'react-icons/io'
 import { MdPortableWifiOff } from 'react-icons/md'
 import Announcement from './Announcement'
+import { showToast } from '../utils/helper'
 
 
 const Header = () => {
@@ -63,6 +64,19 @@ const Header = () => {
   }, [])
 
   useEffect(() => {
+    if (isOnline === false) {
+      (async () => {
+        try {
+          const data = await window.electron.handleNetworkChange();
+          showToast(data.message);
+        } catch (error) {
+          console.error("Error handling network change:", error);
+        }
+      })();
+    }
+  }, [isOnline])
+
+  useEffect(() => {
     dispatch(setFreeCollateral(0))
   }, [server])
 
@@ -96,6 +110,8 @@ const Header = () => {
   useEffect(() => {
     if (memonic != '') {
       getWalletAddress()
+    } else {
+      dispatch(setChainAddress(""))
     }
   }, [memonic, enMemonic])
 

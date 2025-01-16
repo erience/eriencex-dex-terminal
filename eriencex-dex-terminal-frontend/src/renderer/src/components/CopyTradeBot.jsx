@@ -8,7 +8,7 @@ import { FaInfoCircle } from 'react-icons/fa'
 import AboutCopyBotModal from './AboutCopyBotModal'
 
 const CopyTradeBot = forwardRef(function CopyTradeBot(props, ref) {
-  const { blockHeight, baseURL, server, enMemonic, freeCollateral, cryptoPair } = useSelector(selectData)
+  const { blockHeight, baseURL, server, enMemonic, freeCollateral, cryptoPair, memonic } = useSelector(selectData)
   const [userAddress, setUserAddress] = useState('')
   const [formData, setFormData] = useState({
     url: "", equityPercentage: ""
@@ -312,28 +312,32 @@ const CopyTradeBot = forwardRef(function CopyTradeBot(props, ref) {
   };
 
   const handleClick = () => {
-    setIsDisabled(true)
-    if (formData.url && formData.equityPercentage) {
-      if (!validateUrl(formData.url)) {
-        showToast('Please Insert Valid Url', 'error')
-        return
+    if (memonic != '') {
+      setIsDisabled(true)
+      if (formData.url && formData.equityPercentage) {
+        if (!validateUrl(formData.url)) {
+          showToast('Please Insert Valid Url', 'error')
+          return
+        }
+        const decodedAddress = decodeAddress(formData.url.split("/").pop())
+        if (!validateAddress(decodedAddress)) {
+          showToast('Please Insert Valid Url', 'error')
+          return
+        }
+        if (Number(formData.equityPercentage) < 1) {
+          showToast('Percentage To Invest Must Be Greater Than 1', 'error')
+          return
+        }
+        setUserAddress(decodedAddress)
+        // console.log({ filter, equityPercentage })
+        connectWebSocket(decodedAddress)
+        showToast('Copy bot started', 'success')
+      } else {
+        setIsDisabled(false)
+        showToast('Please enter all details', 'error')
       }
-      const decodedAddress = decodeAddress(formData.url.split("/").pop())
-      if (!validateAddress(decodedAddress)) {
-        showToast('Please Insert Valid Url', 'error')
-        return
-      }
-      if (Number(formData.equityPercentage) < 1) {
-        showToast('Percentage To Invest Must Be Greater Than 1', 'error')
-        return
-      }
-      setUserAddress(decodedAddress)
-      // console.log({ filter, equityPercentage })
-      connectWebSocket(decodedAddress)
-      showToast('Copy bot started', 'success')
     } else {
-      setIsDisabled(false)
-      showToast('Please enter all details', 'error')
+      showToast('Please provide memonic first', 'warning')
     }
   }
 
