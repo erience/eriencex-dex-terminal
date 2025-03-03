@@ -5,7 +5,7 @@
 
 ## Terminal Steps
 1. 📥 **Download and install the terminal** from the following link: [Download ErienceX DEX Terminal v1.0.7](https://github.com/erience/eriencex-dex-terminal/releases/download/v1.0.7/ErienceX-DEX-Terminal-1.0.7-setup.exe)
-2. 🔑 **Enter your Secret Phrase** as shown in the image below. ![Secret Phrase](https://raw.githubusercontent.com/erience/eriencex-dex-terminal/refs/heads/main/assets/secret-phrase.png)
+2. 🔑 **Enter your Secret Phrase** in the Top Right section of Terminal Window.
 3. 📊 **Place Limit/Market Buy and Sell Orders** using the right-side order box.
 
 ## Dydx Grid Trading Bot
@@ -30,7 +30,7 @@
 🔹 **What to do:** Decide how much profit you want to make before the bot closes a trade.
 🔹 **Example:** If your entry price was **$60,169.10** and you set a **0.20% take profit**, the bot will sell the grid when the price reaches **$60,289.44**.
 
-## 📌 Copy Trading Bot
+## Dydx Copy Trading Bot
 
 ### 🔗 Enter URL
 🔹 **What to do:** Paste the URL of the wallet or trading account you want to copy trades from.
