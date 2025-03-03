@@ -4,7 +4,6 @@
 ![Terminal Screenshot](https://raw.githubusercontent.com/erience/eriencex-dex-terminal/refs/heads/main/assets/terminal-screen-107.png)
 
 ## Terminal Steps
-
-
-## Terminal Preview
-![Terminal Preview](https://raw.githubusercontent.com/erience/eriencex-dex-terminal/aa1b51127a38a7144b8fe8231fe632d640362edd/terminal.gif)
+1. Download and install the terminal from the following link: [Download ErienceX DEX Terminal v1.0.7](https://github.com/erience/eriencex-dex-terminal/releases/download/v1.0.7/ErienceX-DEX-Terminal-1.0.7-setup.exe)
+2. Enter your Secret Phrase as shown in the image below.
+3. Place Limit/Market Buy and Sell Orders using the right-side order box.
