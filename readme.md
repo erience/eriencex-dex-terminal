@@ -55,6 +55,3 @@
 ### ⚠️ Disclaimer
 🔹 If the original order size is greater than the trade amount you selected, the bot will automatically place the order using the nearest possible trade size.
 🔹 **Example:** If the original order is for **$150** and you selected a trade percentage that results in **$12**, but the minimum order size allowed by the market is **$20**, the bot will place an order for **$20** instead.
-
-## Terminal Preview
-![Terminal Preview](https://raw.githubusercontent.com/erience/eriencex-dex-terminal/aa1b51127a38a7144b8fe8231fe632d640362edd/terminal.gif)
